@@ -1,10 +1,15 @@
 module Types where
 
-type NoteNumber = Int
+import qualified Data.Map as Map
+import Data.List (sort)
+
+type Pitch = Int
 type Octave = Int
 type Semitones = Int
 type PitchRange = (Pitch, Pitch) -- min/max
 type Chord = [Pitch]
+type Finger = Int
+type Hand = Map.Map Finger Pitch
 
 data PitchClass = C | Csharp | D | Dsharp | E | F | Fsharp | G | Gsharp | A | Asharp | B
     deriving (Show, Eq, Enum, Bounded, Ord)
@@ -55,53 +60,24 @@ data ChordSymbol = ChordSymbol {
     chordTensions :: [Tension]
 } deriving (Show)
 
-data Pitch = Pitch PitchClass Octave
-    deriving (Show, Eq)
-instance Ord Pitch where
-    (Pitch pitchClass1 octave1) `compare` (Pitch pitchClass2 octave2) =
-        if octave1 == octave2
-        then pitchClass1 `compare` pitchClass2
-        else octave1 `compare` octave2
-instance Enum Pitch where
-    toEnum = noteNumberToPitch
-    fromEnum = pitchToNoteNumber
+toPitch :: PitchClass -> Octave -> Pitch
+toPitch pitchClass octave = (semitonesPerOctave * octave) + fromEnum pitchClass
 
-pitchToNoteNumber :: Pitch -> NoteNumber
-pitchToNoteNumber (Pitch pitchClass octave) = (semitonesPerOctave * octave) + fromEnum pitchClass
+toPitchClass :: Pitch -> PitchClass
+toPitchClass = toEnum . snd . (`divMod` semitonesPerOctave)
 
-noteNumberToPitch :: NoteNumber -> Pitch
-noteNumberToPitch number =
-    let (octave, rest) = number `divMod` semitonesPerOctave
-        pitchClass = toEnum rest
-    in Pitch pitchClass octave
+toHand :: Chord -> Hand
+toHand chord = Map.fromList pairs
+    where pairs = zip fingers chord
+          fingers = [5, 4, 3, 2, 1] -- Left hand. Right hand would be the reverse.
 
--- | The interval from one pitch to another
-interval :: Pitch -> Pitch -> Semitones
-interval note1 note2 = (pitchToNoteNumber note2) - (pitchToNoteNumber note1)
+toChord :: Hand -> Chord
+toChord = sort . map snd . Map.toList
 
--- | Transpose a pitch by a number of semitones
-transpose :: Semitones -> Pitch -> Pitch
-transpose semitones = noteNumberToPitch . (+ semitones) . pitchToNoteNumber
+absInterval :: Pitch -> Pitch -> Semitones
+absInterval pitch1 pitch2 = abs (pitch1 - pitch2)
 
--- | Converts a (relative) semitone offset to an (absolute) pitch, given a root pitch.
-semitoneToPitch :: Pitch -> Semitones -> Pitch
-semitoneToPitch = flip transpose
-
-findNextNoteBelow, findNextNoteAbove :: PitchClass -> Pitch -> Pitch
-findNextNoteBelow = findNote pred
-findNextNoteAbove = findNote succ
-
-findNote :: (Pitch -> Pitch) -> PitchClass -> Pitch -> Pitch
-findNote directionFunction  pitchClassToFind currentNote@(Pitch pitchClass _)
-    | pitchClass == pitchClassToFind = currentNote
-    | otherwise = findNote directionFunction pitchClassToFind $ directionFunction currentNote
-
--- | Checks whether all notes of a chord are inside a pitch range
-chordIsInsidePitchRange :: PitchRange -> Chord -> Bool
-chordIsInsidePitchRange range = all $ noteIsInsidePitchRange range
-
-
-noteIsInsidePitchRange :: PitchRange -> Pitch -> Bool
-noteIsInsidePitchRange (minNote, maxNote) note
-    | minNote <= note && note <= maxNote = True
-    | otherwise = False
+chordSpan :: Chord -> Semitones
+chordSpan chord = case chord of
+    st:st':sts -> absInterval st (last $ st':sts)
+    _ -> 0

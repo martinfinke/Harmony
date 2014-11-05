@@ -25,7 +25,7 @@ chordsForChordSymbol chordSymbol@(ChordSymbol pitchClass _ tensions) =
     map toAbsolutePitch semitoneCombinations
     where normalizedSemitones = (nub . addTensions tensions . basicSemitones) chordSymbol
           semitoneCombinations = combinations normalizedSemitones
-          toAbsolutePitch = map (semitoneToPitch (Pitch pitchClass octave))
+          toAbsolutePitch = map (+ toPitch pitchClass octave)
           octave = 3
 
 -- | All possible ways to layer a set of semitones.
