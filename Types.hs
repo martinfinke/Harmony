@@ -1,7 +1,5 @@
 module Types where
 
-import Data.List(nub)
-
 type NoteNumber = Int
 type Octave = Int
 type Semitones = Int
@@ -13,9 +11,9 @@ data PitchClass = C | Csharp | D | Dsharp | E | F | Fsharp | G | Gsharp | A | As
 
 pitchClasses :: [PitchClass]
 pitchClasses = [minBound..maxBound]
-numberOfPitchClasses, notesPerOctave :: Int
+numberOfPitchClasses, semitonesPerOctave :: Int
 numberOfPitchClasses = length pitchClasses
-notesPerOctave = numberOfPitchClasses
+semitonesPerOctave = numberOfPitchClasses
 
 data MajMin = Major | Minor
     deriving (Show, Enum, Bounded)
@@ -27,7 +25,7 @@ data Tension = Seventh | MajorSeventh
     deriving (Show, Eq, Enum, Bounded)
 
 tensionToSemitones :: Tension -> Semitones
-tensionToSemitones tension = snd . (`divMod` notesPerOctave) $ case tension of
+tensionToSemitones tension = snd . (`divMod` semitonesPerOctave) $ case tension of
     Seventh -> 10
     MajorSeventh -> 11
     DiminishedNinth -> 13
@@ -39,7 +37,7 @@ tensionToSemitones tension = snd . (`divMod` notesPerOctave) $ case tension of
     Thirteenth -> 21
 
 semitonesToTension :: Semitones -> Maybe Tension
-semitonesToTension semitones = case snd $ semitones `divMod` notesPerOctave of
+semitonesToTension semitones = case snd $ semitones `divMod` semitonesPerOctave of
     1 -> Just DiminishedNinth
     2 -> Just Ninth
     3 -> Just AugmentedNinth
@@ -51,14 +49,11 @@ semitonesToTension semitones = case snd $ semitones `divMod` notesPerOctave of
     11 -> Just MajorSeventh
     _ -> Nothing
 
-data ChordSpec = ChordSpec {
+data ChordSymbol = ChordSymbol {
     chordPitchClass :: PitchClass,
     chordMajMin :: Maybe MajMin,
     chordTensions :: [Tension]
 } deriving (Show)
-
-chordSpec :: PitchClass -> Maybe MajMin -> [Tension] -> ChordSpec
-chordSpec pitchClass maybeMajMin tensions = ChordSpec pitchClass maybeMajMin (nub tensions)
 
 data Pitch = Pitch PitchClass Octave
     deriving (Show, Eq)
@@ -72,11 +67,11 @@ instance Enum Pitch where
     fromEnum = pitchToNoteNumber
 
 pitchToNoteNumber :: Pitch -> NoteNumber
-pitchToNoteNumber (Pitch pitchClass octave) = (notesPerOctave * octave) + fromEnum pitchClass
+pitchToNoteNumber (Pitch pitchClass octave) = (semitonesPerOctave * octave) + fromEnum pitchClass
 
 noteNumberToPitch :: NoteNumber -> Pitch
 noteNumberToPitch number =
-    let (octave, rest) = number `divMod` notesPerOctave
+    let (octave, rest) = number `divMod` semitonesPerOctave
         pitchClass = toEnum rest
     in Pitch pitchClass octave
 
@@ -88,15 +83,9 @@ interval note1 note2 = (pitchToNoteNumber note2) - (pitchToNoteNumber note1)
 transpose :: Semitones -> Pitch -> Pitch
 transpose semitones = noteNumberToPitch . (+ semitones) . pitchToNoteNumber
 
-
-
-
-
-
-
-
-
-
+-- | Converts a (relative) semitone offset to an (absolute) pitch, given a root pitch.
+semitoneToPitch :: Pitch -> Semitones -> Pitch
+semitoneToPitch = flip transpose
 
 findNextNoteBelow, findNextNoteAbove :: PitchClass -> Pitch -> Pitch
 findNextNoteBelow = findNote pred

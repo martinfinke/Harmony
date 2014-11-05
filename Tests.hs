@@ -1,24 +1,36 @@
 {-# LANGUAGE TemplateHaskell #-}
+module Tests where
+
 import Test.QuickCheck.All (quickCheckAll, verboseCheckAll)
-import Test.QuickCheck (Arbitrary(arbitrary), choose, oneof, quickCheck, verboseCheck)
+import Test.QuickCheck (Arbitrary(arbitrary), Gen, choose, oneof, quickCheck, verboseCheck)
 import System.Exit (ExitCode, exitFailure, exitSuccess)
 
 import Types
+import GenerateChords
+
+-- | Generate an arbitrary element from a list
+chooseOne :: [a] -> Gen a
+chooseOne = oneof . map return
+
+-- | Wrapper type to generate integer values inside a predefined range.
+-- | Prevents overflow when QuickCheck tests random values.
+newtype SmallInt = SmallInt Int
+    deriving (Eq, Show)
+instance Arbitrary SmallInt where
+    arbitrary = fmap SmallInt $ choose (fst integerTestRange, snd integerTestRange)
+-- | The low/high bound to use for SmallInt
+integerTestRange :: (Int, Int)
+integerTestRange = (-1000000, 1000000)
 
 instance Arbitrary PitchClass where
-    arbitrary = oneof . map return $ pitchClasses
-
-newtype SmallInt = SmallInt Int deriving (Eq, Show)
-instance Arbitrary SmallInt where
-    arbitrary = fmap SmallInt $ choose (-maxValue, maxValue)
-        where maxValue = 1000000
+    arbitrary = chooseOne pitchClasses
 
 instance Arbitrary MajMin where
-    arbitrary = oneof . map return $ possibleValues
+    arbitrary = chooseOne possibleValues
         where possibleValues = [minBound..maxBound] :: [MajMin]
 
 instance Arbitrary Tension where
-    arbitrary = oneof . map return $ possibleValues
+    arbitrary = chooseOne possibleValues
         where possibleValues = [minBound..maxBound] :: [Tension]
 
 instance Arbitrary Pitch where
@@ -26,6 +38,8 @@ instance Arbitrary Pitch where
         (SmallInt noteNumber) <- arbitrary
         return $ noteNumberToPitch noteNumber
 
+
+-- Types Tests
 prop_fromNoteNumber (SmallInt noteNumber) =
     (pitchToNoteNumber . noteNumberToPitch) noteNumber == noteNumber
 
@@ -56,7 +70,7 @@ prop_tensionToSemitones_symmetry tension =
     (Just tension) == (semitonesToTension . tensionToSemitones) tension
 
 prop_tensionToSemitones_modulus (SmallInt semitones) =
-    let (_, semitonesModOctave) = semitones `divMod` notesPerOctave
+    let (_, semitonesModOctave) = semitones `divMod` semitonesPerOctave
         tension1 = semitonesToTension semitones
         tension2 = semitonesToTension semitonesModOctave
     in tension1 == tension2
@@ -70,6 +84,17 @@ prop_findNote_isBelowStartingNote pitchClass startingNote =
 
 prop_findNote_isAboveStartingNote pitchClass startingNote =
     findNextNoteAbove pitchClass startingNote >= startingNote
+
+
+
+-- GenerateChords Tests
+prop_combinations_correctLength semitones lengthLimit =
+    let maxLength = 5
+        (_, lengthLimit') = lengthLimit `divMod` maxLength
+        semitones' = take lengthLimit' semitones
+    in (length . combinations) semitones' == (length allowedOctaveTranspositions)^(length semitones')
+
+
 
 -- needed by QuickCheck
 return []
