@@ -19,6 +19,10 @@ newtype SmallInt = SmallInt Int
     deriving (Eq, Show)
 instance Arbitrary SmallInt where
     arbitrary = fmap SmallInt $ choose (fst integerTestRange, snd integerTestRange)
+newtype UnsignedSmallInt = UnsignedSmallInt Int
+    deriving (Eq, Show)
+instance Arbitrary UnsignedSmallInt where
+    arbitrary = fmap UnsignedSmallInt $ choose (0, snd integerTestRange)
 -- | The low/high bound to use for SmallInt
 integerTestRange :: (Int, Int)
 integerTestRange = (-1000000, 1000000)
@@ -37,7 +41,7 @@ instance Arbitrary Tension where
 
 
 
-        
+
 
 -- Types Tests
 prop_tensionToSemitones_symmetry tension =
@@ -49,9 +53,9 @@ prop_tensionToSemitones_modulus (SmallInt semitones) =
         tension2 = semitonesToTension semitonesModOctave
     in tension1 == tension2
 
-prop_ChordToHand_symmetry (SmallInt pitch1) (SmallInt pitch2) (SmallInt pitch3) =
-    let chord = sort [pitch1, pitch2, pitch3]
-    in chord == (toChord . toHand) chord
+prop_ChordToHand_symmetry (UnsignedSmallInt pitch1) (UnsignedSmallInt pitch2) (UnsignedSmallInt pitch3) =
+    let c = chord [pitch1, pitch2, pitch3]
+    in c == (toChord . toHand) c
 
 -- GenerateChords Tests
 prop_combinations_correctLength semitones lengthLimit =

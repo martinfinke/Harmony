@@ -17,7 +17,7 @@ basicSemitones (ChordSymbol _ maybeMajMin _) = case maybeMajMin of
 
 -- | Adds relative semitone offsets for tensions.
 addTensions :: [Tension] -> [Semitones] -> [Semitones]
-addTensions tensions chord = chord ++ map tensionToSemitones tensions
+addTensions tensions c = c ++ map tensionToSemitones tensions
 
 -- | All possible ways to layer the pitches that belong to a given chord symbol.
 chordsForChordSymbol :: ChordSymbol -> [Chord]
@@ -25,7 +25,7 @@ chordsForChordSymbol chordSymbol@(ChordSymbol pitchClass _ tensions) =
     map toAbsolutePitch semitoneCombinations
     where normalizedSemitones = (nub . addTensions tensions . basicSemitones) chordSymbol
           semitoneCombinations = combinations normalizedSemitones
-          toAbsolutePitch = map (+ toPitch pitchClass octave)
+          toAbsolutePitch = chord . map (+ toPitch pitchClass octave)
           octave = 3
 
 -- | All possible ways to layer a set of semitones.

@@ -1,4 +1,26 @@
-module Types where
+module Types(
+             Pitch,
+             Octave,
+             Semitones,
+             PitchRange,
+             Chord(..),
+             Finger,
+             Hand,
+             PitchClass(..),
+             semitonesPerOctave,
+             MajMin(..),
+             Tension(..),
+             ChordSymbol(..),
+             chord,
+             toPitch,
+             toPitchClass,
+             toHand,
+             toChord,
+             absInterval,
+             chordSpan,
+             tensionToSemitones,
+             semitonesToTension,
+             pitchClasses) where
 
 import qualified Data.Map as Map
 import Data.List (sort)
@@ -7,7 +29,8 @@ type Pitch = Int
 type Octave = Int
 type Semitones = Int
 type PitchRange = (Pitch, Pitch) -- min/max
-type Chord = [Pitch]
+newtype Chord = Chord [Pitch]
+    deriving (Eq, Show)
 type Finger = Int
 type Hand = Map.Map Finger Pitch
 
@@ -66,18 +89,29 @@ toPitch pitchClass octave = (semitonesPerOctave * octave) + fromEnum pitchClass
 toPitchClass :: Pitch -> PitchClass
 toPitchClass = toEnum . snd . (`divMod` semitonesPerOctave)
 
+chord :: [Pitch] -> Chord
+chord = Chord . sort
+
+-- | Converts from a pure semitones form to a finger-mapped form.
+-- | Normally, for the left hand, the 5th finger plays the lowest pitch,
+-- | and the 1st finger plays the highest.
+-- | If the chord contains less than 5 pitches, the "top" fingers (i.e. 1, 2, ...)
+-- | will be unused. This could be improved to better distribute the pitches.
 toHand :: Chord -> Hand
-toHand chord = Map.fromList pairs
-    where pairs = zip fingers chord
+toHand (Chord c) = Map.fromList fingerMappings
+    where fingerMappings = zip fingers c
           fingers = [5, 4, 3, 2, 1] -- Left hand. Right hand would be the reverse.
 
+-- | Converts from finger-mapped form to pure semitone form.
+-- | The information which finger plays which pitch is lost.
 toChord :: Hand -> Chord
-toChord = sort . map snd . Map.toList
+toChord = chord . map snd . Map.toList
 
 absInterval :: Pitch -> Pitch -> Semitones
 absInterval pitch1 pitch2 = abs (pitch1 - pitch2)
 
+-- | The interval between the lowest and the highest pitch of a chord.
 chordSpan :: Chord -> Semitones
-chordSpan chord = case chord of
-    st:st':sts -> absInterval st (last $ st':sts)
+chordSpan c = case c of
+    Chord (st:st':sts) -> absInterval st (last $ st':sts)
     _ -> 0
