@@ -13,7 +13,7 @@ name:                Harmony
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-synopsis:            Generates chord progressions from a set of preferences and constraints.
+synopsis:            Generates optimal chord layerings from a set of preferences and constraints.
 
 -- A longer description of the package.
 -- description:         
@@ -57,7 +57,7 @@ executable Harmony
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.7 && <4.8
+  build-depends:       base >=4.7 && <4.8, containers >=0.5.5
   
   -- Directories containing source files.
   -- hs-source-dirs:      
@@ -68,6 +68,8 @@ executable Harmony
 Test-Suite Tests
   type:                exitcode-stdio-1.0
   main-is:             Tests.hs
-  build-depends:       base, QuickCheck
+  build-depends:       base, QuickCheck, containers >=0.5.5
 
-
+library
+  exposed-modules:     Main, Types, ConstrainChord, RateChord, Piano
+  build-depends:       base >=4.7 && <4.8, containers >=0.5.5

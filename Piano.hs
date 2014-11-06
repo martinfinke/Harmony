@@ -10,6 +10,7 @@ isBlackKey, isWhiteKey :: Pitch -> Bool
 isBlackKey pitch = toPitchClass pitch `elem` blackKeys
 isWhiteKey = not . isBlackKey
 
+-- | The maximum distances (in 'Semitones') between two 'Finger's
 defaultMaxFingerSpread :: Map.Map (Finger, Finger) Semitones
 defaultMaxFingerSpread = Map.fromList [
     ((1, 2), 12), -- 1st and 2nd finger can span an octave
