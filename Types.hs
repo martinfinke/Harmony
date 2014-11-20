@@ -25,10 +25,21 @@ type Hand = Map.Map Finger Pitch
 data PitchClass = C | Csharp | D | Dsharp | E | F | Fsharp | G | Gsharp | A | Asharp | B
     deriving (Show, Eq, Enum, Bounded, Ord)
 
+-- | Enharmonics are just aliases for their sharp equivalents
+cFlat, dFlat, eFlat, fFlat, gFlat, aFlat, bFlat :: PitchClass
+cFlat = B
+dFlat = Csharp
+eFlat = Dsharp
+fFlat = E
+gFlat = Fsharp
+aFlat = Gsharp
+bFlat = Asharp
+
 pitchClasses :: [PitchClass]
 pitchClasses = [minBound..maxBound]
-numberOfPitchClasses, semitonesPerOctave :: Int
+numberOfPitchClasses :: Int
 numberOfPitchClasses = length pitchClasses
+semitonesPerOctave :: Semitones
 semitonesPerOctave = numberOfPitchClasses
 
 data MajMin = Major | Minor
