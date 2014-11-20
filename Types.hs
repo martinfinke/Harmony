@@ -46,22 +46,29 @@ data MajMin = Major | Minor
     deriving (Show, Enum, Bounded)
 
 -- | Tensions as found in jazz / popular music notation.
-data Tension = Seventh | MajorSeventh
+data Tension = DiminishedFifth | AugmentedFifth
+             | DiminishedSixth | Sixth
+             | DiminishedSeventh | Seventh | MajorSeventh
              | DiminishedNinth | Ninth | AugmentedNinth
-             | Eleventh | AugmnentedEleventh
+             | Eleventh | AugmentedEleventh
              | DiminishedThirteenth | Thirteenth
     deriving (Show, Eq, Enum, Bounded)
 
 -- | Converts a 'Tension' to a relative semitone offset that can be added to the root note.
 tensionToSemitones :: Tension -> Semitones
 tensionToSemitones tension = snd . (`divMod` semitonesPerOctave) $ case tension of
+    DiminishedFifth -> 6
+    AugmentedFifth -> 8
+    DiminishedSixth -> 8
+    Sixth -> 9
+    DiminishedSeventh -> 9
     Seventh -> 10
     MajorSeventh -> 11
     DiminishedNinth -> 13
     Ninth -> 14
     AugmentedNinth -> 15
     Eleventh -> 17
-    AugmnentedEleventh -> 18
+    AugmentedEleventh -> 18
     DiminishedThirteenth -> 20
     Thirteenth -> 21
 
@@ -72,7 +79,7 @@ semitonesToTension semitones = case snd $ semitones `divMod` semitonesPerOctave 
     2 -> Just Ninth
     3 -> Just AugmentedNinth
     5 -> Just Eleventh
-    6 -> Just AugmnentedEleventh
+    6 -> Just AugmentedEleventh
     8 -> Just DiminishedThirteenth
     9 -> Just Thirteenth
     10 -> Just Seventh
@@ -84,7 +91,8 @@ semitonesToTension semitones = case snd $ semitones `divMod` semitonesPerOctave 
 data ChordSymbol = ChordSymbol {
     chordPitchClass :: PitchClass,
     chordMajMin :: Maybe MajMin,
-    chordTensions :: [Tension]
+    chordTensions :: [Tension],
+    chordSlash :: Maybe PitchClass
 } deriving (Show)
 
 -- | Create a 'Pitch' from a 'PitchClass' and an 'Octave'.
@@ -116,6 +124,11 @@ toChord = chord . map snd . Map.toList
 -- | The interval between two pitches (always positive)
 absInterval :: Pitch -> Pitch -> Semitones
 absInterval pitch1 pitch2 = abs (pitch1 - pitch2)
+
+-- | The interval between two pitch classes (always positive)
+pitchClassInterval :: PitchClass -> PitchClass -> Semitones
+pitchClassInterval pc1 pc2 = absInterval (pitch pc1) (pitch pc2)
+    where pitch = (flip toPitch 3)
 
 -- | The absolute interval between the lowest and the highest pitch of a chord.
 -- 0 if there's no interval in the chord.
