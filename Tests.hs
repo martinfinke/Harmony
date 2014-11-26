@@ -2,9 +2,10 @@
 module Tests where
 
 import Test.QuickCheck.All (quickCheckAll, verboseCheckAll)
-import Test.QuickCheck (Arbitrary(arbitrary), Gen, choose, oneof, quickCheck, verboseCheck)
+import Test.QuickCheck (Arbitrary(arbitrary), Gen, choose, oneof, quickCheck, verboseCheck, resize, listOf1)
 import System.Exit (ExitCode, exitFailure, exitSuccess)
 import Data.List (sort)
+import qualified Data.Map as Map
 
 import Types
 import GenerateChords
@@ -38,10 +39,9 @@ instance Arbitrary Tension where
     arbitrary = chooseOne possibleValues
         where possibleValues = [minBound..maxBound] :: [Tension]
 
-
-
-
-
+instance Arbitrary Chord where
+    arbitrary = chord `fmap` (resize 5 randomPitches)
+        where randomPitches = listOf1 arbitrary :: Gen [Pitch]
 
 -- Types Tests
 prop_tensionToSemitones_symmetry tension =
