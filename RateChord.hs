@@ -1,6 +1,7 @@
 module RateChord where
 
 import Types
+import Piano
 
 -- | A 'Rating' is always >= 0, and a low value is better.
 type Rating = Float
@@ -43,6 +44,21 @@ rate_avoidSpreading = rate . toChord
                                     then standardPenalty
                                     else perfectRating
           maxSpreadSemitones = 7
+
+-- | Penalize whenever the lowest finger may accidentally hit a black key (above the white key it is playing), or when the highest finger may accidentally hit a black key (below the white key it is playing).
+-- This only applies when the hand is "into the keys", and is never a problem for small chord spans.
+rate_avoidAccidentalBlackKeyHit :: Distance -> ChordRater
+rate_avoidAccidentalBlackKeyHit safeDistance hand
+    | handSpan hand > safeDistance && handIsIntoTheKeys hand = penaltyForLowest + penaltyForHighest
+    | otherwise = perfectRating
+    where lowest = lowestNote hand
+          lowestIsBad = isWhiteKey lowest && isBlackKey (succ lowest)
+          penaltyForLowest = if lowestIsBad then standardPenalty else perfectRating
+          highest = highestNote hand
+          highestIsBad = isWhiteKey highest && isBlackKey (pred highest)
+          penaltyForHighest = if highestIsBad then standardPenalty else perfectRating
+
+-- | Whenever two fingers are spread far apart (i.e. near their maximum allowed spread), and the hand is "into the keys", 
 
 
 
