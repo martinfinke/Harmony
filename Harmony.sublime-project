@@ -3,7 +3,12 @@
 	[
 		{
 			"follow_symlinks": true,
-			"path": "."
+			"path": ".",
+			"folder_exclude_patterns": [".cabal-sandbox", "dist"]
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/martin/Documents/studium/3. Semester/Masterprojekt/Design"
 		}
 	]
 }
