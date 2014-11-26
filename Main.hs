@@ -4,9 +4,11 @@ import qualified Data.Map as Map
 
 import Types
 import ConstrainChord
+import Piano
 import RateChord
 import GenerateChords
 import ExampleChordProgressions
+import Tests hiding (main)
 
 evalulateHand :: Hand -> Maybe Rating
 evalulateHand hand
