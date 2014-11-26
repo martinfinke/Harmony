@@ -114,12 +114,17 @@ chord = Chord . sort
 -- will be unused. This could be improved to better distribute the pitches across a hand.
 toHand :: Chord -> Hand
 toHand (Chord c) = Map.fromList $ zip fingers c
-    where fingers = [5, 4, 3, 2, 1] -- Left hand. Right hand would be the reverse.
+    where fingers = [5, 4, 3, 2, 1] -- Left hand. Right hand would be the 'reverse'.
 
 -- | Converts from finger-mapped form to pure semitone form.
 -- The information which finger plays which pitch is lost.
 toChord :: Hand -> Chord
 toChord = chord . map snd . Map.toList
+
+-- | The lowest and highest note played by a hand. The hand may not be empty.
+lowestNote, highestNote :: Hand -> Pitch
+highestNote = maximum . map snd . Map.toList
+lowestNote = minimum . map snd . Map.toList
 
 -- | The interval between two pitches (always positive)
 absInterval :: Pitch -> Pitch -> Semitones
