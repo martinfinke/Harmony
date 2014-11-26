@@ -135,9 +135,17 @@ pitchClassInterval :: PitchClass -> PitchClass -> Semitones
 pitchClassInterval pc1 pc2 = absInterval (pitch pc1) (pitch pc2)
     where pitch = (flip toPitch 3)
 
--- | The absolute interval between the lowest and the highest pitch of a chord.
--- 0 if there's no interval in the chord.
-chordSpan :: Chord -> Semitones
-chordSpan c = case c of
-    Chord (st:st':sts) -> absInterval st (last $ st':sts)
-    _ -> 0
+-- | The pitch range from the first to the second argument. Returns 'Nothing' iff the second pitch is below (or equal to) the first.
+pitchRangeBetween :: Pitch -> Pitch -> Maybe PitchRange
+pitchRangeBetween p1 p2
+    | p2 > p1 = Just (p1, p2)
+    | otherwise = Nothing
+
+-- | Whether two 'Pitch'es are next to each other (i.e. 1 'Semitone' interval)
+areNeighbouring :: Pitch -> Pitch -> Bool
+areNeighbouring p1 p2 = absInterval p1 p2 == 1
+
+-- | The two pitches directly next to a pitch.
+neighbours :: Pitch -> [Pitch]
+neighbours p = [p-1, p+1]
+

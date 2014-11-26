@@ -1,7 +1,7 @@
 module ConstrainChord where
 
 import Types
-import Piano (defaultMaxFingerSpread)
+import Piano
 import Utils (combinePairsWith, sortTuple)
 import qualified Data.Map as Map
 
@@ -20,9 +20,9 @@ checkAllConstraints hand = all ($ hand) allChordConstraints
 constrain_fingerSpreading :: ChordConstraint
 constrain_fingerSpreading hand =
     all checkInterval intervals
-    where combineFingerMappings (f, p) (f', p') = (sortTuple (f, f'), absInterval p p')
+    where combineFingerMappings (f, p) (f', p') = (sortTuple (f, f'), distance (p, p'))
           intervals = combinePairsWith combineFingerMappings $ Map.toList hand
-          checkInterval (fingers, interval) = maybe True (interval <=) (Map.lookup fingers defaultMaxFingerSpread)
+          checkInterval (fingers, dist) = maybe True (dist <=) (Map.lookup fingers defaultMaxFingerDistance)
 
 -- | Ensures that all played notes are inside a given 'PitchRange'.
 constrain_insidePitchRange :: PitchRange -> ChordConstraint
