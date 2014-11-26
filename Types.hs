@@ -126,6 +126,9 @@ lowestNote, highestNote :: Hand -> Pitch
 highestNote = maximum . map snd . Map.toList
 lowestNote = minimum . map snd . Map.toList
 
+semitoneSpan :: Hand -> Semitones
+semitoneSpan hand = absInterval (lowestNote hand) (highestNote hand)
+
 -- | The interval between two pitches (always positive)
 absInterval :: Pitch -> Pitch -> Semitones
 absInterval pitch1 pitch2 = abs (pitch1 - pitch2)

@@ -6,6 +6,7 @@ import Types
 import ConstrainChord
 import Piano
 import RateChord
+import RateChordTransition
 import GenerateChords
 import ExampleChordProgressions
 import Tests hiding (main)
