@@ -33,7 +33,7 @@ defaultMaxFingerDistance = Map.fromList [
     ((4, 5), distance (toPitch B 3, toPitch E 4))
     ]
 
--- | 2 is the distance between two black or two white keys.
+-- | 2 is the distance between two white keys.
 type Distance = Rational
 
 -- | Calculate the distance of a 'PitchRange' on the keyboard. This normalizes the fact that some semitone intervals on the keyboard (E-F and B-C) are further apart than the others.
@@ -69,6 +69,9 @@ blackKeyNudgeAmount = (distanceBetweenFSharpAndGSharp - whiteKeyWidth) % whiteKe
     -- These are (millimeter) values measured on a piano:
     where distanceBetweenFSharpAndGSharp = 27
           whiteKeyWidth = 23
+
+isAllowedDistance :: ((Finger, Finger), Distance) -> Bool
+isAllowedDistance (fingers, dist) = maybe True (dist <=) (Map.lookup fingers defaultMaxFingerDistance)
 
 -- | The absolute interval between the lowest and the highest pitch played by a 'Hand'.
 -- 0 if there's no interval in the chord.

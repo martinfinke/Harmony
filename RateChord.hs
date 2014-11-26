@@ -47,6 +47,7 @@ rate_avoidSpreading = rate . toChord
 
 -- | Penalize whenever the lowest finger may accidentally hit a black key (above the white key it is playing), or when the highest finger may accidentally hit a black key (below the white key it is playing).
 -- This only applies when the hand is "into the keys", and is never a problem for small chord spans.
+-- TODO: Should be changed so that safeDistance is a ratio, and is checked for each Finger-Finger interval
 rate_avoidAccidentalBlackKeyHit :: Distance -> ChordRater
 rate_avoidAccidentalBlackKeyHit safeDistance hand
     | handSpan hand > safeDistance && handIsIntoTheKeys hand = penaltyForLowest + penaltyForHighest

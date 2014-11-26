@@ -19,10 +19,9 @@ checkAllConstraints hand = all ($ hand) allChordConstraints
 -- | Ensures that no two 'Finger's in a hand exceed their allowed spread on a piano.
 constrain_fingerSpreading :: ChordConstraint
 constrain_fingerSpreading hand =
-    all checkInterval intervals
+    all isAllowedDistance distances
     where combineFingerMappings (f, p) (f', p') = (sortTuple (f, f'), distance (p, p'))
-          intervals = combinePairsWith combineFingerMappings $ Map.toList hand
-          checkInterval (fingers, dist) = maybe True (dist <=) (Map.lookup fingers defaultMaxFingerDistance)
+          distances = combinePairsWith combineFingerMappings $ Map.toList hand
 
 -- | Ensures that all played notes are inside a given 'PitchRange'.
 constrain_insidePitchRange :: PitchRange -> ChordConstraint
