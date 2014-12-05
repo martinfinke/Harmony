@@ -57,3 +57,10 @@ optimalPathToState' state rating ancestors
         let bestAncestor = fst $ minimumBy compareAncestors ancestors
         in optimalPathToState bestAncestor >>= \(statesToAncestor, costToAncestor) ->
             Just (state:statesToAncestor, costToAncestor + rating)
+
+pathToHandProgression :: SubPath -> [Hand]
+pathToHandProgression (states, _) = reverse . catMaybes $ map stateToHand states
+    where stateToHand state = case state of
+            (State hand _ _) -> Just hand
+            _ -> Nothing
+pathToHandProgression ([], _) = []

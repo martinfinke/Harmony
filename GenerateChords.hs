@@ -1,7 +1,12 @@
 module GenerateChords where
 
 import Types
-import Data.List (nub)
+import Data.List (nub, sortBy)
+import Data.Ord (comparing)
+import RateChord
+import RateChordTransition
+import Optimize (State(..))
+import Utils (allCombinations)
 
 -- | Creates the basic relative semitone offsets for a triad (root, third, fifth).
 -- | Doesn't create a third if neither major nor minor.
@@ -33,6 +38,9 @@ chordsForChordSymbol chordSymbol@(ChordSymbol pitchClass _ tensions slash) = cas
           absolutePitches = map toAbsolutePitch semitoneCombinations
           octave = 3
 
+handsForChordSymbol :: ChordSymbol -> [Hand]
+handsForChordSymbol = map toHand . chordsForChordSymbol
+
 -- | Checks whether the lowest note in the 'Chord' is a given 'PitchClass'.
 -- Assumes that chord is sorted (i.e. the slash should be the first element)
 lowestNoteIs :: PitchClass -> Chord -> Bool
@@ -49,4 +57,28 @@ combinations (st:sts) = concat $ map appendRest transposedSts
 
 allowedOctaveTranspositions :: [Semitones]
 allowedOctaveTranspositions = map (*semitonesPerOctave) [-1, 0, 1]
+
+transitionFromState :: State -> Hand -> (State, Rating)
+transitionFromState InitialState _ = (InitialState, perfectRating)
+transitionFromState (GoalState _) _ = error "Trying to transition out of GoalState!"
+transitionFromState state@(State parentHand _ _) hand =
+    (state, totalTransitionRating (parentHand, hand))
+
+-- | Generates a graph of all possible 'Hand' progressions for a list of 'ChordSymbol's
+-- Returns a 'GoalState' that can be used by the 'Optimize' module to find the optimal chord progression.
+generateProgressions :: [ChordSymbol] -> State
+generateProgressions = generateProgressions' [InitialState]
+
+-- | Utility function for recursion
+generateProgressions' :: [State] -> [ChordSymbol] -> State
+generateProgressions' parentStates (currentSymbol:others) =
+    let currentHands = handsForChordSymbol currentSymbol
+        currentRatings = map totalRating currentHands
+        transitionsFromParent = map (transitions parentStates) currentHands
+        currentStates = zipWith3 State currentHands currentRatings transitionsFromParent
+    in generateProgressions' currentStates others
+    where transitions fromStates hand = map (flip transitionFromState hand) fromStates
+
+generateProgressions' parentStates [] = GoalState $ map (flip (,) perfectRating) parentStates
+
 
