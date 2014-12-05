@@ -1,6 +1,7 @@
 module ExampleChordProgressions where
 
 import Types
+import qualified Data.Map as Map
 
 -- Some abbreviations for common chords
 major, minor :: PitchClass -> [Tension] -> ChordSymbol
@@ -144,3 +145,25 @@ godBlessTheChild =
                [majorSeventh aFlat, majorSixth aFlat, minor aFlat [MajorSeventh], minorSixth aFlat, minorSeventh G, seventhFlatNine C,
                minorSeventh F, dominantSeventh bFlat, majorSixth eFlat]
           p2 = [minor C [], minor C [MajorSeventh], minorSeventh C, minorSixth C, minorSeventh G]
+
+
+
+
+
+-- Other examples to test different functionality
+clusteredHand1, clusteredHand2 :: Hand
+clusteredHand1 = toHand $ chord [toPitch C 3, toPitch D 3, toPitch Dsharp 3, toPitch A 3]
+clusteredHand2 = toHand $ chord [toPitch C 3, toPitch D 3, toPitch Dsharp 3, toPitch F 3]
+
+spreadHand1 = toHand $ chord [toPitch G 3, toPitch G 4, toPitch C 5]
+spreadHand2 = toHand $ chord [toPitch G 3, toPitch G 4, toPitch G 5]
+
+accidentalBlackKeyHitHand1 = toHand $ chord [toPitch Csharp 3, toPitch G 3, toPitch D 4]
+accidentalBlackKeyHitHand2 = toHand $ chord [toPitch C 3, toPitch G 3, toPitch A 3, toPitch B 3, toPitch Csharp 4]
+
+jumpingTransition :: (Hand, Hand)
+jumpingTransition = (Map.fromList [(5, toPitch C 3), (3, toPitch E 3), (1, toPitch G 3)],
+                     Map.fromList [(5, toPitch A 3), (3, toPitch D 4), (1, toPitch G 4)])
+
+
+
