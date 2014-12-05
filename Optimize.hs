@@ -1,14 +1,13 @@
 module Optimize(optimalPathToState,
+                pathToHandProgression,
                  SubPath,
                  State(..),
                  Cost) where
 
-import qualified Data.Map as Map
 import Data.List (minimumBy)
-import Data.Ord (comparing, Ordering)
-import Data.Maybe (isNothing, isJust)
+import Data.Maybe (catMaybes)
 
-import Types
+import Types (Hand, ChordSymbol)
 import RateChord (Rating, perfectRating)
 
 type Cost = Rating
@@ -18,6 +17,20 @@ data State = InitialState
           | GoalState [(State, Rating)]
           | State Hand Rating [(State, Rating)]
 
+instance Show State where
+    show InitialState = showFlat InitialState ++ "\n"
+    show s@(GoalState parents) = showFlat s ++ " with Parents: " ++ showParents parents ++ "\n"
+    show s@(State _ _ parents) = showFlat s ++ " with Parents: " ++ showParents parents ++ "\n"
+
+showParents :: [(State, Rating)] -> String
+showParents ((state, rating):ps) = showFlat state ++ " with transition rating " ++ (show rating) ++ ", " ++ showParents ps
+showParents [] = "no parents."
+
+showFlat :: State -> String
+showFlat (State hand rating _) = "State with Hand: " ++ (show hand) ++ " and Rating: " ++ (show rating)
+showFlat InitialState = "InitialState"
+showFlat (GoalState _) = "GoalState"
+  
 -- | Comparison for 'Maybe' 'SubPath's. Nothing is greater than everything.
 compareSubPaths :: Maybe SubPath -> Maybe SubPath -> Ordering
 compareSubPaths Nothing _ = GT
