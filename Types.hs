@@ -1,7 +1,9 @@
 module Types where
 
 import qualified Data.Map as Map
-import Data.List (sort)
+import Data.List (sort, intercalate, sortBy)
+import Data.Ord (comparing)
+import Data.Tuple (swap)
 
 -- | MIDI Note Number
 type Pitch = Int
@@ -99,6 +101,11 @@ data ChordSymbol = ChordSymbol {
 toPitch :: PitchClass -> Octave -> Pitch
 toPitch pitchClass octave = (semitonesPerOctave * octave) + fromEnum pitchClass
 
+fromPitch :: Pitch -> (PitchClass, Octave)
+fromPitch pitch =
+    let (octave, pc) = pitch `divMod` semitonesPerOctave
+    in (toEnum pc, octave)
+
 -- | Retrieve the 'PitchClass' from a 'Pitch', discarding the 'Octave'.
 toPitchClass :: Pitch -> PitchClass
 toPitchClass = toEnum . snd . (`divMod` semitonesPerOctave)
@@ -151,4 +158,7 @@ areNeighbouring p1 p2 = absInterval p1 p2 == 1
 -- | The two pitches directly next to a pitch.
 neighbours :: Pitch -> [Pitch]
 neighbours p = [p-1, p+1]
+
+showHand :: Hand -> String
+showHand hand = intercalate "," $ map show $ sortBy (comparing swap) $ map (fromPitch . snd) (Map.toList hand)
 
