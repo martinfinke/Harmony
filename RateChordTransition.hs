@@ -3,7 +3,7 @@ module RateChordTransition where
 import Types
 import Piano
 import RateChord (Rating, perfectRating, standardPenalty)
-import Data.Map as Map
+import Data.Map as Map hiding (foldr)
 
 -- | A function to rate the transition from one 'Hand' to another.
 type ChordTransitionRater = Hand -> Hand -> Rating
@@ -14,6 +14,11 @@ allChordTransitionRaters = [rate_avoidJumps 4,
                             rate_avoidTraversingBlackKeys,
                             rate_avoidHittingBetweenBlackKeys,
                             rate_avoidSpanDifference 7]
+
+-- | Applies all 'ChordTransitionRater's, summing up the ratings from all of them.
+totalTransitionRating :: (Hand, Hand) -> Rating
+totalTransitionRating (hand1, hand2) = foldr (\current -> (+) (current hand1 hand2)) perfectRating allChordTransitionRaters
+
 
 rate_avoidJumps :: Semitones -> ChordTransitionRater
 rate_avoidJumps intervalTolerance hand1 hand2 =
