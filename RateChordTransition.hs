@@ -1,3 +1,7 @@
+{-|
+Module      : RateChordTransition
+Description : Functions to rate transitions between two 'Chord's (or 'Hand's).
+-}
 module RateChordTransition where
 
 import Types
@@ -8,6 +12,7 @@ import Data.Map as Map hiding (foldr)
 -- | A function to rate the transition from one 'Hand' to another.
 type ChordTransitionRater = Hand -> Hand -> Rating
 
+-- | All 'ChordTransitionRater's in this module.
 allChordTransitionRaters :: [ChordTransitionRater]
 allChordTransitionRaters = [rate_avoidJumps 4,
                             rate_avoidJumpInHighestVoice 5,
@@ -19,17 +24,24 @@ allChordTransitionRaters = [rate_avoidJumps 4,
 totalTransitionRating :: (Hand, Hand) -> Rating
 totalTransitionRating (hand1, hand2) = foldr (\current -> (+) (current hand1 hand2)) perfectRating allChordTransitionRaters
 
-
-rate_avoidJumps :: Semitones -> ChordTransitionRater
+-- | Avoid jumps in any note.
+rate_avoidJumps :: Semitones -- ^ Tolerance interval, jumps smaller or equal to this won't be penalized.
+                -> ChordTransitionRater
 rate_avoidJumps intervalTolerance hand1 hand2 =
     Map.fold (+) perfectRating penaltiesByFinger
     where penaltiesByFinger = Map.intersectionWith (rateInterval intervalTolerance) hand1 hand2
 
-rate_avoidJumpInHighestVoice :: Semitones -> ChordTransitionRater
+-- | Additional rule to avoid jumps in the highest voice, possibly with a different tolerance.
+rate_avoidJumpInHighestVoice :: Semitones -- ^ Tolerance interval, jumps smaller or equal to this won't be penalized.
+                             -> ChordTransitionRater
 rate_avoidJumpInHighestVoice intervalTolerance hand1 hand2 =
     rateInterval intervalTolerance (highestNote hand1) (highestNote hand2)
 
-rateInterval :: Semitones -> Semitones -> Semitones -> Rating
+-- | Utility function to rate whether an interval is too large, given a tolerance.
+rateInterval :: Semitones -- ^ Tolerance value
+             -> Semitones -- ^ Starting note
+             -> Semitones -- ^ Target note
+             -> Rating
 rateInterval tolerance st1 st2 = fromIntegral . (max 0) . (subtract tolerance) $ absInterval st1 st2
 
 -- | Penalize whenever a white key from the first chord has to traverse a black key to reach another white key. Only a problem when the hand is "into the keys".

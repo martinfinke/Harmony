@@ -71,5 +71,5 @@ Test-Suite Tests
   build-depends:       base, QuickCheck, containers >=0.5.5
 
 library
-  exposed-modules:     Main, Types, ConstrainChord, RateChord, Piano
+  exposed-modules:     Main, Types, ConstrainChord, ExampleChordProgressions, GenerateChords, Optimize, Piano, RateChord, RateChordTransition, Utils
   build-depends:       base >=4.7 && <4.8, containers >=0.5.5

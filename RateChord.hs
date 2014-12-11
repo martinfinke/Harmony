@@ -1,3 +1,7 @@
+{-|
+Module      : RateChord
+Description : Functions to rate a single 'Chord' (or 'Hand').
+-}
 module RateChord where
 
 import Types
@@ -15,11 +19,12 @@ perfectRating = 0.0
 -- | The penalty added to a hand whenever it violates a rule.
 standardPenalty = 1.0
 
+-- | All 'ChordRater's in this module.
 allChordRaters :: [ChordRater]
 allChordRaters = [rate_avoidClustering,
                   rate_avoidSpreading]
 
--- | Applies all 'ChordRater's, summing up the ratings from all of them.
+-- | Applies 'allChordRaters', summing up the ratings from all of them.
 totalRating :: Hand -> Rating
 totalRating hand = foldr ((+) . ($ hand)) perfectRating allChordRaters
 
@@ -58,8 +63,6 @@ rate_avoidAccidentalBlackKeyHit safeDistance hand
           highest = highestNote hand
           highestIsBad = isWhiteKey highest && isBlackKey (pred highest)
           penaltyForHighest = if highestIsBad then standardPenalty else perfectRating
-
--- | Whenever two fingers are spread far apart (i.e. near their maximum allowed spread), and the hand is "into the keys", 
 
 
 

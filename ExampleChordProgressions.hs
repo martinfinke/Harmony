@@ -1,14 +1,18 @@
+{-|
+Module      : ExampleChordProgressions
+Description : 'ChordSymbol' progressions from common jazz standards, to be used as test data.
+-}
 module ExampleChordProgressions where
 
 import Types
 import qualified Data.Map as Map
 
--- Some abbreviations for common chords
+-- | Shorthands to create frequently used 'ChordSymbol's
 major, minor :: PitchClass -> [Tension] -> ChordSymbol
 major pitchClass tensions = ChordSymbol pitchClass (Just Major) tensions Nothing
 minor pitchClass tensions = ChordSymbol pitchClass (Just Minor) tensions Nothing
 
-minorSixth, majorSixth, majorSeventh, minorSeventh, dominantSeventh, diminishedSeventh, halfDiminishedSeventh :: PitchClass -> ChordSymbol
+minorSixth, majorSixth, majorSeventh, minorSeventh, dominantSeventh, diminishedSeventh, halfDiminishedSeventh, seventhFlatNine :: PitchClass -> ChordSymbol
 minorSixth = flip minor [Sixth]
 majorSixth = flip major [Sixth]
 majorSeventh = flip major [MajorSeventh]
@@ -18,17 +22,21 @@ diminishedSeventh = flip minor [DiminishedFifth, DiminishedSeventh]
 halfDiminishedSeventh = flip minor [Seventh, DiminishedFifth]
 seventhFlatNine = flip major [Seventh, DiminishedNinth]
 
+-- | Repeats a 'ChordSymbol' progression a given number of times.
 repeatPhrase :: Int -> [ChordSymbol] -> [ChordSymbol]
 repeatPhrase times chordSymbols
     | times <= 0 = chordSymbols
     | otherwise = chordSymbols ++ repeatPhrase (pred times) chordSymbols
 
+-- | Repeats a 'ChordSymbol' progression twice.
 repeatTwice :: [ChordSymbol] -> [ChordSymbol]
 repeatTwice = repeatPhrase 2
 
--- Chord Progressions from The Real Book, 6th Edition (ISBN 0-634-06038-4)
 
--- All Of Me (Simons/Marks)
+
+-- Chord Progressions from The Real Book, 6th Edition:
+
+-- | All Of Me (Simons / Marks)
 allOfMe :: [ChordSymbol]
 allOfMe = [
     majorSixth C, dominantSeventh E,
@@ -41,7 +49,7 @@ allOfMe = [
     minorSeventh D, dominantSeventh G, majorSixth C, diminishedSeventh eFlat, minorSeventh D, dominantSeventh G
     ]
 
--- All The Things You Are (Kern / Hammerstein II)
+-- | All The Things You Are (Kern / Hammerstein II)
 allTheThingsYouAre :: [ChordSymbol]
 allTheThingsYouAre = [
     major Csharp [Seventh, AugmentedNinth], major C [Seventh, AugmentedNinth],
@@ -56,7 +64,7 @@ allTheThingsYouAre = [
     minorSeventh bFlat, dominantSeventh eFlat, majorSeventh aFlat, halfDiminishedSeventh G, seventhFlatNine C
     ]
 
--- Autumn Leaves (Kosma / Mercer / Prevert)
+-- | Autumn Leaves (Kosma / Mercer / Prevert).
 -- Lots of II-V-I.
 autumnLeaves :: [ChordSymbol]
 autumnLeaves = [
@@ -69,7 +77,7 @@ autumnLeaves = [
     ]
     where eMinor = minor E []
     
--- Blue In Green (Davis)
+-- | Blue In Green (Davis).
 -- Contains "unusual" (i.e. modal) tensions.
 blueInGreen :: [ChordSymbol]
 blueInGreen = [
@@ -79,7 +87,7 @@ blueInGreen = [
     minorSeventh D, minorSeventh G, major A [Seventh, AugmentedNinth], minorSixth D
     ]
 
--- A Child is Born (Jones)
+-- | A Child is Born (Jones).
 -- Contains lots of repetition, and slash chords.
 aChildIsBorn :: [ChordSymbol]
 aChildIsBorn =
@@ -94,7 +102,7 @@ aChildIsBorn =
     repeatTwice [majorSeventh bFlat, (minorSixth eFlat){chordSlash=Just bFlat}] ++ [majorSeventh bFlat]
     where minorNinth = flip minor [Seventh, Ninth]
 
--- Donna Lee (Parker)
+-- | Donna Lee (Parker).
 -- Classic Be-Bop. Most transitions should be possible without jumping.
 donnaLee :: [ChordSymbol]
 donnaLee = [
@@ -108,7 +116,7 @@ donnaLee = [
     minorSeventh C, dominantSeventh F, minorSeventh bFlat, dominantSeventh eFlat, majorSeventh aFlat, seventhFlatNine F, minorSeventh bFlat, dominantSeventh eFlat
     ]
 
--- Epistrophy (Monk / Clarke)
+-- | Epistrophy (Monk / Clarke).
 -- Unusual/chromatic (Monk-style) progressions. And LOTS of repetition
 epistrophy :: [ChordSymbol]
 epistrophy =
@@ -123,7 +131,7 @@ epistrophy =
           p2 = [dominantSeventh Dsharp, dominantSeventh E]
 
 
--- Giant Steps (Coltrane)
+-- | Giant Steps (Coltrane)
 giantSteps :: [ChordSymbol]
 giantSteps = [
     majorSeventh B, dominantSeventh D, majorSeventh G, dominantSeventh bFlat, majorSeventh eFlat, minorSeventh A, dominantSeventh D,
@@ -132,7 +140,7 @@ giantSteps = [
     majorSeventh B, minorSeventh F, dominantSeventh bFlat, majorSeventh eFlat, minorSeventh Csharp, dominantSeventh Fsharp
     ]
 
--- God Bless The Child (Herzog, Holiday)
+-- | God Bless The Child (Herzog, Holiday)
 godBlessTheChild :: [ChordSymbol]
 godBlessTheChild =
     p1 ++ [minorSeventh F, dominantSeventh bFlat] ++
@@ -150,17 +158,27 @@ godBlessTheChild =
 
 
 
--- Other examples to test different functionality
+-- Other examples to test different functionality:
+
+-- | These should be penalized by the 'RateChord.rate_avoidClustering' 'RateChordTransition.ChordRater'.
 clusteredHand1, clusteredHand2 :: Hand
 clusteredHand1 = toHand $ chord [toPitch C 3, toPitch D 3, toPitch Dsharp 3, toPitch A 3]
 clusteredHand2 = toHand $ chord [toPitch C 3, toPitch D 3, toPitch Dsharp 3, toPitch F 3]
 
+-- | These should be penalized by the 'RateChord.rate_avoidSpreading' 'RateChordTransition.ChordRater'.
+spreadHand1, spreadHand2 :: Hand
 spreadHand1 = toHand $ chord [toPitch G 3, toPitch G 4, toPitch C 5]
 spreadHand2 = toHand $ chord [toPitch G 3, toPitch G 4, toPitch G 5]
 
+-- | These should be penalized by the 'RateChord.rate_avoidAccidentalBlackKeyHit' 'RateChordTransition.ChordRater'.
+accidentalBlackKeyHitHand1, accidentalBlackKeyHitHand2 :: Hand
 accidentalBlackKeyHitHand1 = toHand $ chord [toPitch Csharp 3, toPitch G 3, toPitch D 4]
 accidentalBlackKeyHitHand2 = toHand $ chord [toPitch C 3, toPitch G 3, toPitch A 3, toPitch B 3, toPitch Csharp 4]
 
+-- | This transition should be penalized by the 'RateChordTransition.rate_avoidJumps' 'RateChordTransition.ChordTransitionRater'.
+-- Usage:
+-- >>> rate_avoidJumps 5 (fst jumpingTransition) (snd jumpingTransition)
+-- 16.0
 jumpingTransition :: (Hand, Hand)
 jumpingTransition = (Map.fromList [(5, toPitch C 3), (3, toPitch E 3), (1, toPitch G 3)],
                      Map.fromList [(5, toPitch A 3), (3, toPitch D 4), (1, toPitch G 4)])

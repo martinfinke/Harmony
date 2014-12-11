@@ -1,3 +1,7 @@
+{-|
+Module      : Types
+Description : Fundamental data types used throughout the project.
+-}
 module Types where
 
 import qualified Data.Map as Map
@@ -27,7 +31,7 @@ type Hand = Map.Map Finger Pitch
 data PitchClass = C | Csharp | D | Dsharp | E | F | Fsharp | G | Gsharp | A | Asharp | B
     deriving (Show, Eq, Enum, Bounded, Ord)
 
--- | Enharmonics are just aliases for their sharp equivalents
+-- | Enharmonics (as aliases for their sharp equivalents)
 cFlat, dFlat, eFlat, fFlat, gFlat, aFlat, bFlat :: PitchClass
 cFlat = B
 dFlat = Csharp
@@ -39,11 +43,14 @@ bFlat = Asharp
 
 pitchClasses :: [PitchClass]
 pitchClasses = [minBound..maxBound]
+
 numberOfPitchClasses :: Int
 numberOfPitchClasses = length pitchClasses
+
 semitonesPerOctave :: Semitones
 semitonesPerOctave = numberOfPitchClasses
 
+-- | Major/minor of a chord. This determines which kind of third will be generated.
 data MajMin = Major | Minor
     deriving (Show, Enum, Bounded)
 
@@ -101,6 +108,7 @@ data ChordSymbol = ChordSymbol {
 toPitch :: PitchClass -> Octave -> Pitch
 toPitch pitchClass octave = (semitonesPerOctave * octave) + fromEnum pitchClass
 
+-- | Inverse of 'toPitch'.
 fromPitch :: Pitch -> (PitchClass, Octave)
 fromPitch pitch =
     let (octave, pc) = pitch `divMod` semitonesPerOctave
@@ -133,6 +141,7 @@ lowestNote, highestNote :: Hand -> Pitch
 highestNote = maximum . map snd . Map.toList
 lowestNote = minimum . map snd . Map.toList
 
+-- | The interval "spanned" by a 'Hand' (interval between lowest to highest note).
 semitoneSpan :: Hand -> Semitones
 semitoneSpan hand = absInterval (lowestNote hand) (highestNote hand)
 
@@ -159,6 +168,7 @@ areNeighbouring p1 p2 = absInterval p1 p2 == 1
 neighbours :: Pitch -> [Pitch]
 neighbours p = [p-1, p+1]
 
+-- | Displays all finger-pitch mappings of a 'Hand' in a easy-to-read way.
 showHand :: Hand -> String
 showHand hand = intercalate "," $ map show $ sortBy (comparing swap) $ map (fromPitch . snd) (Map.toList hand)
 

@@ -1,12 +1,18 @@
+{-|
+Module      : Piano
+Description : Definitions specific to the Piano.
+-}
 module Piano where
 
 import Types
 import qualified Data.Map as Map
-import Data.Ratio
+import Data.Ratio ((%))
 
+-- | The black keys on a piano.
 blackKeys :: [PitchClass]
 blackKeys = [Csharp, Dsharp, Fsharp, Gsharp, Asharp]
 
+-- | Check if a 'Pitch' corresponds to a black or to a white key.
 isBlackKey, isWhiteKey :: Pitch -> Bool
 isBlackKey pitch = toPitchClass pitch `elem` blackKeys
 isWhiteKey = not . isBlackKey
@@ -33,7 +39,8 @@ defaultMaxFingerDistance = Map.fromList [
     ((4, 5), distance (toPitch B 3, toPitch E 4))
     ]
 
--- | 2 is the distance between two white keys.
+-- | Unit of length on the keyboard.
+-- 2 is the distance between two white keys.
 type Distance = Rational
 
 -- | Calculate the distance of a 'PitchRange' on the keyboard. This normalizes the fact that some semitone intervals on the keyboard (E-F and B-C) are further apart than the others.
@@ -70,6 +77,7 @@ blackKeyNudgeAmount = (distanceBetweenFSharpAndGSharp - whiteKeyWidth) % whiteKe
     where distanceBetweenFSharpAndGSharp = 27
           whiteKeyWidth = 23
 
+-- | Check if a given 'Distance' is allowed between the two keys played by two 'Finger's.
 isAllowedDistance :: ((Finger, Finger), Distance) -> Bool
 isAllowedDistance (fingers, dist) = maybe True (dist <=) (Map.lookup fingers defaultMaxFingerDistance)
 
