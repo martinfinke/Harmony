@@ -81,7 +81,9 @@ instance Show Tension where
         Thirteenth -> "13"
 
 showTensions :: [Tension] -> String
-showTensions = (' ':) . intercalate " " . map show . sort
+showTensions [] = ""
+showTensions tensions = (' ':) . intercalate " " . map show . sort $ tensions
+
 
 -- | Converts a 'Tension' to a relative semitone offset that can be added to the root note.
 tensionToSemitones :: Tension -> Semitones
