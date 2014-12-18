@@ -81,23 +81,7 @@ allowedOctaveTranspositions = map (*semitonesPerOctave) [-1, 0, 1]
 data State = InitialState
           | GoalState [(State, Rating)]
           | State Hand Rating [(State, Rating)]
-
-instance Show State where
-    show InitialState = showFlat InitialState ++ "\n"
-    show s@(GoalState parents) = showFlat s ++ " with Parents: " ++ showParents parents ++ "\n"
-    show s@(State _ _ parents) = showFlat s ++ " with Parents: " ++ showParents parents ++ "\n"
-
--- | Shows only the parents of a 'State'.
-showParents :: [(State, Rating)] -> String
-showParents ((state, rating):ps) = showFlat state ++ " with transition rating " ++ (show rating) ++ ", " ++ showParents ps
-showParents [] = "no parents."
-
--- | Shows a 'State' without its parents.
-showFlat :: State -> String
-showFlat (State hand rating _) = "State with Hand: " ++ (show hand) ++ " and Rating: " ++ (show rating)
-showFlat InitialState = "InitialState"
-showFlat (GoalState _) = "GoalState"
-
+    deriving(Show)
 
 -- | Generates a graph of all possible 'Hand' progressions for a list of 'ChordSymbol's
 -- Returns a 'GoalState' that can be used by the 'Optimize' module to find the optimal chord progression.
