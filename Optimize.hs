@@ -19,7 +19,7 @@ type Cost = Rating
 -- | A path through the 'State' graph, with a total 'Cost'.
 type Path = ([State], Cost)
 
--- | Comparison for 'Maybe' 'Path's. 'Data.Maybe.Nothing' is greater than everything.
+-- | Comparison for 'Maybe' 'Path's. Any path is better than no path at all, so every 'Just' value is less than 'Nothing'.
 comparePaths :: Maybe Path -> Maybe Path -> Ordering
 comparePaths Nothing _ = GT
 comparePaths _ Nothing = LT
