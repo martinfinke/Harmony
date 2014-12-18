@@ -10,6 +10,7 @@ import Types
 import Piano
 import Utils (combinePairsWith, sortPair)
 import qualified Data.Map as Map
+import Data.Array (inRange)
 
 -- | A function that either accepts or rejects a 'Hand'.
 type ChordConstraint = Hand -> Bool
@@ -33,7 +34,7 @@ constrain_fingerSpreading hand =
 -- | Ensures that all played notes are inside a given 'PitchRange'.
 constrain_insidePitchRange :: PitchRange -> ChordConstraint
 constrain_insidePitchRange (lowest, highest) =
-    all (`elem` [lowest..highest]) . map snd . Map.toList
+    all (inRange (lowest, highest)) . map snd . Map.toList
 
 -- | All generated 'Chord's should be inside this range.
 defaultAcceptedPitchRange :: PitchRange
