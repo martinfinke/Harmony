@@ -52,7 +52,7 @@ semitonesPerOctave = numberOfPitchClasses
 
 -- | Major/minor of a chord. This determines which kind of third will be generated.
 data MajMin = Major | Minor
-    deriving (Show, Enum, Bounded)
+    deriving (Eq, Show, Enum, Bounded)
 
 -- | Tensions as found in jazz / popular music notation.
 data Tension = DiminishedFifth | AugmentedFifth
@@ -61,7 +61,27 @@ data Tension = DiminishedFifth | AugmentedFifth
              | DiminishedNinth | Ninth | AugmentedNinth
              | Eleventh | AugmentedEleventh
              | DiminishedThirteenth | Thirteenth
-    deriving (Show, Eq, Enum, Bounded)
+    deriving (Eq, Enum, Bounded, Ord)
+
+instance Show Tension where
+    show t = case t of
+        DiminishedFifth -> "b5"
+        AugmentedFifth -> "#5"
+        DiminishedSixth -> "b6"
+        Sixth -> "6"
+        DiminishedSeventh -> "b7"
+        Seventh -> "7"
+        MajorSeventh -> "maj7"
+        DiminishedNinth -> "b9"
+        Ninth -> "9"
+        AugmentedNinth -> "#9"
+        Eleventh -> "11"
+        AugmentedEleventh -> "#11"
+        DiminishedThirteenth -> "b13"
+        Thirteenth -> "13"
+
+showTensions :: [Tension] -> String
+showTensions = (' ':) . intercalate " " . map show . sort
 
 -- | Converts a 'Tension' to a relative semitone offset that can be added to the root note.
 tensionToSemitones :: Tension -> Semitones
@@ -102,7 +122,13 @@ data ChordSymbol = ChordSymbol {
     chordMajMin :: Maybe MajMin,
     chordTensions :: [Tension],
     chordSlash :: Maybe PitchClass
-} deriving (Show)
+}
+
+instance Show ChordSymbol where
+    show (ChordSymbol pitchClass maybeMajMin tensions maybeChordSlash) =
+        show pitchClass ++ showMajMin maybeMajMin ++ showChordSlash maybeChordSlash ++ showTensions tensions
+        where showMajMin = maybe "" $ \majMin -> if majMin == Minor then "-" else ""
+              showChordSlash = maybe "" (('_':) . show)
 
 -- | Create a 'Pitch' from a 'PitchClass' and an 'Octave'.
 toPitch :: PitchClass -> Octave -> Pitch
