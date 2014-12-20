@@ -93,11 +93,10 @@ edgeCost End _ = error "Transitioning out of End!"
 edgeCost _ Start = error "Transitioning into Start!"
 edgeCost Start (HandGroup (hand:_)) = rating hand
 edgeCost _ End = perfectRating
-edgeCost (HandGroup _) contents@(HandGroup hands) =
-    let lastHand = last hands
-        secondButLastHand = last (init hands)
+edgeCost (HandGroup _) (HandGroup hands) =
+    let reversedOrder@(lastHand:_) = reverse hands
         handRating = rating lastHand
-        transitionRating = totalTransitionRating (hand secondButLastHand, hand lastHand)
+        transitionRating = totalTransitionRating $ map hand reversedOrder
     in handRating + transitionRating
 
 bestHandProgression :: [ChordSymbol] -> [Hand]
