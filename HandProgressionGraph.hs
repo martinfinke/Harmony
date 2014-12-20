@@ -1,8 +1,8 @@
 {-|
-Module      : HandGraph
+Module      : HandProgressionGraph
 Description : Generates a graph of all possible 'Hand's for a given 'ChordSymbol' progression.
 -}
-module HandGraph where
+module HandProgressionGraph where
 
 import Types
 import RateChord (Rating, totalRating, perfectRating)
@@ -17,13 +17,30 @@ import qualified Data.Graph.Inductive.Query.SP as SP
 import Data.Graph.Inductive.PatriciaTree (Gr(..))
 import Data.Maybe (catMaybes, isJust)
 
--- | The current 'ChordTransitionRater's need no more than two adjacent hands, so a pair is sufficient. This has to be changed if higher-order rules are added (such as some counterpoint rules).
-data Contents = Start
-              | HandGroup [RatedHand]
+
+-- | A 'Hand' together with its 'totalRating'.
+-- The 'Rating' is included because values of this type are duplicated a lot in different 'SubProgression's, and it would be redundant to calculate the 'Rating' again each time.
+data RatedHand = RatedHand {hand :: Hand, rating :: Rating}
+    deriving(Show)
+
+-- | A part of the chord progression.
+-- 'Start' is a marker for the beginning of the progression, 'End' for the end.
+-- The 'SubProgression' value constructor 
+data SubProgression = Start
+              | SubProgression [RatedHand]
               | End
     deriving(Show)
 
-handGroupLength = 2
+type HandProgressionGraph = Gr SubProgression Rating
+type Node = Graph.LNode SubProgression
+type Edge = Graph.LEdge Rating
+
+-- | The maximum number of 'Hand's examined by any 'ChordTransitionRater'.
+-- This is the length of the '[Hand]' list passed to each 'ChordTransitionRater' function. If a 'ChordTransitionRater' tries to pattern-match a higher number of 'Hand's than this value, it won't match.
+subProgressionLength :: Int
+subProgressionLength = 5
+
+-- Problem 1: Wenn ein Song kürzer ist als subProgressionLength, dann werden momentan die ersten Akkorde des Songs von den ChordTransitionRatern verschont, die z.B. nur 2 Akkorde begutachten.
 
 getRatedHand :: ([RatedHand] -> RatedHand) -> [RatedHand] -> RatedHand
 getRatedHand selector hands
@@ -34,10 +51,8 @@ relevantLhsHand, relevantRhsHand :: [RatedHand] -> RatedHand
 relevantLhsHand = getRatedHand last
 relevantRhsHand = getRatedHand (last . init)
 
-data RatedHand = RatedHand {hand :: Hand, rating :: Rating}
-    deriving(Show)
 
-makeGraph :: [ChordSymbol] -> Gr Contents Rating
+makeGraph :: [ChordSymbol] -> HandProgressionGraph
 makeGraph chordSymbols =
     let ratedHands = map ratedHandsForChordSymbol chordSymbols :: [[RatedHand]]
         transitions = makeTransitions ratedHands
@@ -62,10 +77,10 @@ addIndices startingIndex (currentLevel:rest) =
     in nodes : addIndices (startingIndex+currentLength) rest 
 addIndices _ [] = []
 
-makeEdges :: [[Graph.LNode Contents]] -> [Graph.LEdge Rating]
+makeEdges :: [[Node]] -> [Edge]
 makeEdges = concat . combineNeighbors2 makeNeighborEdges
 
-makeNeighborEdges :: [Graph.LNode Contents] -> [Graph.LNode Contents] -> [Graph.LEdge Rating]
+makeNeighborEdges :: [Node] -> [Node] -> [Edge]
 makeNeighborEdges (firstLeft:restLeft) rhsCol =
     combineOne firstLeft rhsCol ++ makeNeighborEdges restLeft rhsCol
     where makeEdge (lhsIndex, lhsContents) (rhsIndex, rhsContents) = do
@@ -76,24 +91,24 @@ makeNeighborEdges (firstLeft:restLeft) rhsCol =
 makeNeighborEdges [] _ = []
 
 
--- | Determines whether an edge should be created to link two 'Contents' nodes.
+-- | Determines whether an edge should be created to link two 'SubProgression' nodes.
 -- From the 'Start' and to the 'End' there should be edges to all neighboring nodes.
--- For neighboring 'HandGroup' nodes, it depends on whether both sides' relevant hands are equal. See 'relevantLhsHand' and 'relevantRhsHand'.
-shouldMakeNeighborEdge :: Contents -> Contents -> Bool
+-- For neighboring 'SubProgression' nodes, it depends on whether both sides' relevant hands are equal. See 'relevantLhsHand' and 'relevantRhsHand'.
+shouldMakeNeighborEdge :: SubProgression -> SubProgression -> Bool
 shouldMakeNeighborEdge Start _ = True
 shouldMakeNeighborEdge _ End = True
-shouldMakeNeighborEdge (HandGroup lhsHands) (HandGroup rhsHands) =
+shouldMakeNeighborEdge (SubProgression lhsHands) (SubProgression rhsHands) =
     (hand . relevantLhsHand) lhsHands == (hand . relevantRhsHand) rhsHands
 
-makeTransitions :: [[RatedHand]] -> [[Contents]]
-makeTransitions ratedHands = combineNeighborsVariableLength handGroupLength (allCombinationsVariableLength handGroupLength HandGroup) ratedHands
+makeTransitions :: [[RatedHand]] -> [[SubProgression]]
+makeTransitions ratedHands = combineNeighborsVariableLength subProgressionLength (allCombinationsVariableLength subProgressionLength SubProgression) ratedHands
 
-edgeCost :: Contents -> Contents -> Rating
+edgeCost :: SubProgression -> SubProgression -> Rating
 edgeCost End _ = error "Transitioning out of End!"
 edgeCost _ Start = error "Transitioning into Start!"
-edgeCost Start (HandGroup (hand:_)) = rating hand
+edgeCost Start (SubProgression (hand:_)) = rating hand
 edgeCost _ End = perfectRating
-edgeCost (HandGroup _) (HandGroup hands) =
+edgeCost (SubProgression _) (SubProgression hands) =
     let reversedOrder@(lastHand:_) = reverse hands
         handRating = rating lastHand
         transitionRating = totalTransitionRating $ map hand reversedOrder
@@ -102,26 +117,26 @@ edgeCost (HandGroup _) (HandGroup hands) =
 bestHandProgression :: [ChordSymbol] -> [Hand]
 bestHandProgression = bestHandProgressionForGraph . makeGraph
 
-bestHandProgressionForGraph :: Gr Contents Rating -> [Hand]
+bestHandProgressionForGraph :: HandProgressionGraph -> [Hand]
 bestHandProgressionForGraph graph =
     let indexPath = bestIndexPath graph
-        contentNodes = map (Graph.lab graph) indexPath :: [Maybe Contents]
-    in contentsToHands contentNodes
+        subProgressionNodes = map (Graph.lab graph) indexPath :: [Maybe SubProgression]
+    in subProgressionsToHands subProgressionNodes
 
-bestIndexPath :: Gr Contents Rating -> Graph.Path
+bestIndexPath :: HandProgressionGraph -> Graph.Path
 bestIndexPath graph =
     let (start, end) = Graph.nodeRange graph
     in SP.sp start end graph
 
 
--- Take only the first RatedHand, except for the last HandGroup. For that one, take the tail.
-contentsToHands :: [Maybe Contents] -> [Hand]
-contentsToHands list
+-- Take only the first RatedHand, except for the last SubProgression. For that one, take the tail.
+subProgressionsToHands :: [Maybe SubProgression] -> [Hand]
+subProgressionsToHands list
     | null list = []
-    | all isJust list = contentsToHands' $ catMaybes list
+    | all isJust list = subProgressionsToHands' $ catMaybes list
     | otherwise = error "Gap in output chord progression."
 
-contentsToHands' :: [Contents] -> [Hand]
-contentsToHands' (Start:rest) = contentsToHands' rest
-contentsToHands' ((HandGroup hands):End:[]) = map hand hands
-contentsToHands' ((HandGroup firstHands):rest) = hand (head firstHands) : contentsToHands' rest
+subProgressionsToHands' :: [SubProgression] -> [Hand]
+subProgressionsToHands' (Start:rest) = subProgressionsToHands' rest
+subProgressionsToHands' ((SubProgression hands):End:[]) = map hand hands
+subProgressionsToHands' ((SubProgression firstHands):rest) = hand (head firstHands) : subProgressionsToHands' rest

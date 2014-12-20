@@ -9,7 +9,7 @@ import RateChord
 import RateChordTransition
 import GenerateChords
 import ExampleChordProgressions
-import HandGraph
+import HandProgressionGraph
 
 -- | Get the 'ChordRating' for a given 'Hand', if it satisfied all 'ChordConstraint's.
 evalulateHand :: Hand -> Maybe Rating
