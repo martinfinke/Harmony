@@ -28,8 +28,8 @@ handIsIntoTheKeys hand = isBlack (finger 1) || isBlack (finger 5)
 defaultMaxFingerDistance :: Map.Map (Finger, Finger) Distance
 defaultMaxFingerDistance = Map.fromList [
     ((1, 2), distance (toPitch C 3, toPitch C 4)),
-    ((1, 3), distance (toPitch B 3, toPitch C 4)),
-    ((1, 4), distance (toPitch A 3, toPitch C 4)),
+    ((1, 3), distance (toPitch B 2, toPitch C 4)),
+    ((1, 4), distance (toPitch A 2, toPitch C 4)),
     ((1, 5), distance (toPitch C 3, toPitch E 4)), -- The max. span of the whole hand
     ((2, 3), distance (toPitch Dsharp 3, toPitch B 3)),
     ((2, 4), distance (toPitch Gsharp 3, toPitch F 4)),
