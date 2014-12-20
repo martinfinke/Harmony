@@ -9,62 +9,120 @@ import RateChord (Rating, totalRating, perfectRating)
 import RateChordTransition (totalTransitionRating)
 import ExampleChordProgressions
 import GenerateChords
-import Utils (allCombinationsWith, combineNeighbors)
+import ConstrainChord (checkAllConstraints)
+import Utils (allCombinationsWith, allCombinationsVariableLength, combineNeighborsVariableLength, combineNeighbors2)
 import qualified Data.Graph.Inductive.Graph as Graph
 import qualified Data.Graph.Inductive.Query.SP as SP
-import Data.Graph.Inductive.Tree (Gr(..))
---import Data.Graph.Inductive.PatriciaTree (Gr(..))
+--import Data.Graph.Inductive.Tree (Gr)
+import Data.Graph.Inductive.PatriciaTree (Gr(..))
+import Data.Maybe (catMaybes, isJust)
 
 -- | The current 'ChordTransitionRater's need no more than two adjacent hands, so a pair is sufficient. This has to be changed if higher-order rules are added (such as some counterpoint rules).
-data Contents = Contents PositionInSong PositionInSong
+data Contents = Start
+              | HandGroup [RatedHand]
+              | End
     deriving(Show)
 
-data PositionInSong = Start
-                    | RatedHand Hand Rating
-                    | End
-    deriving (Show)
+handGroupLength = 2
 
--- | A node contains two 'PositionInSong's
-type Node = Graph.LNode Contents
+getRatedHand :: ([RatedHand] -> RatedHand) -> [RatedHand] -> RatedHand
+getRatedHand selector hands
+    | null hands = error "Empty hands group."
+    | otherwise = selector hands
 
--- | An edge between two 'Node's, with a 'Rating'.
-type Edge = Graph.LEdge Rating
+relevantLhsHand, relevantRhsHand :: [RatedHand] -> RatedHand
+relevantLhsHand = getRatedHand last
+relevantRhsHand = getRatedHand (last . init)
+
+data RatedHand = RatedHand {hand :: Hand, rating :: Rating}
+    deriving(Show)
 
 makeGraph :: [ChordSymbol] -> Gr Contents Rating
 makeGraph chordSymbols =
-    let ratedHands = map ratedHandsForChordSymbol chordSymbols :: [[PositionInSong]]
-        withStartAndEnd = [Start] : ratedHands ++ [[End]]
-        transitions = combineNeighbors (allCombinationsWith Contents) withStartAndEnd
-        withIndices = addIndices transitions
+    let ratedHands = map ratedHandsForChordSymbol chordSymbols :: [[RatedHand]]
+        transitions = makeTransitions ratedHands
+        withStartAndEnd = [Start] : transitions ++ [[End]]
+        withIndices = addIndices 0 withStartAndEnd
         edges = makeEdges withIndices
         nodes = concat withIndices
     in Graph.mkGraph nodes edges
 
 -- | All possible 'Hand's for a given 'ChordSymbol', each with its total 'Rating'.
-ratedHandsForChordSymbol :: ChordSymbol -> [PositionInSong]
+ratedHandsForChordSymbol :: ChordSymbol -> [RatedHand]
 ratedHandsForChordSymbol chordSymbol =
-    let hands = handsForChordSymbol chordSymbol
-    in zipWith RatedHand hands (map totalRating hands)
+    let hands = filter checkAllConstraints $ handsForChordSymbol chordSymbol
+        ratings = map totalRating hands
+    in zipWith RatedHand hands ratings
 
-addIndices :: [[Contents]] -> [[Node]]
-addIndices = addIndices' 0
-
-addIndices' startingIndex (currentLevel:rest) =
+addIndices :: Int -> [[a]] -> [[Graph.LNode a]]
+addIndices startingIndex (currentLevel:rest) =
     let currentLength = length currentLevel
         indices = take currentLength [startingIndex..]
         nodes = zip indices currentLevel
-    in nodes : addIndices' currentLength rest 
-addIndices' _ [] = []
+    in nodes : addIndices (startingIndex+currentLength) rest 
+addIndices _ [] = []
 
-makeEdges :: [[Node]] -> [Edge]
-makeEdges = concat . combineNeighbors (allCombinationsWith makeEdge)
-    where makeEdge (lhsIndex, lhsContents) (rhsIndex, rhsContents) =
-            (lhsIndex, rhsIndex, edgeCost lhsContents rhsContents)
+makeEdges :: [[Graph.LNode Contents]] -> [Graph.LEdge Rating]
+makeEdges = concat . combineNeighbors2 makeNeighborEdges
+
+makeNeighborEdges :: [Graph.LNode Contents] -> [Graph.LNode Contents] -> [Graph.LEdge Rating]
+makeNeighborEdges (firstLeft:restLeft) rhsCol =
+    combineOne firstLeft rhsCol ++ makeNeighborEdges restLeft rhsCol
+    where makeEdge (lhsIndex, lhsContents) (rhsIndex, rhsContents) = do
+            if shouldMakeNeighborEdge lhsContents rhsContents
+                then Just (lhsIndex, rhsIndex, edgeCost lhsContents rhsContents)
+                else Nothing
+          combineOne lhsElem rhsCol = catMaybes $ map (makeEdge lhsElem) rhsCol
+makeNeighborEdges [] _ = []
+
+
+-- | Determines whether an edge should be created to link two 'Contents' nodes.
+-- From the 'Start' and to the 'End' there should be edges to all neighboring nodes.
+-- For neighboring 'HandGroup' nodes, it depends on whether both sides' relevant hands are equal. See 'relevantLhsHand' and 'relevantRhsHand'.
+shouldMakeNeighborEdge :: Contents -> Contents -> Bool
+shouldMakeNeighborEdge Start _ = True
+shouldMakeNeighborEdge _ End = True
+shouldMakeNeighborEdge (HandGroup lhsHands) (HandGroup rhsHands) =
+    (hand . relevantLhsHand) lhsHands == (hand . relevantRhsHand) rhsHands
+
+makeTransitions :: [[RatedHand]] -> [[Contents]]
+makeTransitions ratedHands = combineNeighborsVariableLength handGroupLength (allCombinationsVariableLength handGroupLength HandGroup) ratedHands
 
 edgeCost :: Contents -> Contents -> Rating
-edgeCost _ (Contents Start _) = perfectRating
-edgeCost _ (Contents _ Start) = error "Transitioning into Start!"
-edgeCost _ (Contents End _)   = error "Transitioning out of End!"
-edgeCost _ (Contents (RatedHand _ r) End) = r
-edgeCost _ (Contents (RatedHand h r) (RatedHand h' _)) = r + totalTransitionRating (h, h')
+edgeCost End _ = error "Transitioning out of End!"
+edgeCost _ Start = error "Transitioning into Start!"
+edgeCost Start (HandGroup (hand:_)) = rating hand
+edgeCost _ End = perfectRating
+edgeCost (HandGroup _) contents@(HandGroup hands) =
+    let lastHand = last hands
+        secondButLastHand = last (init hands)
+        handRating = rating lastHand
+        transitionRating = totalTransitionRating (hand secondButLastHand, hand lastHand)
+    in handRating + transitionRating
 
+bestHandProgression :: [ChordSymbol] -> [Hand]
+bestHandProgression = bestHandProgressionForGraph . makeGraph
+
+bestHandProgressionForGraph :: Gr Contents Rating -> [Hand]
+bestHandProgressionForGraph graph =
+    let indexPath = bestIndexPath graph
+        contentNodes = map (Graph.lab graph) indexPath :: [Maybe Contents]
+    in contentsToHands contentNodes
+
+bestIndexPath :: Gr Contents Rating -> Graph.Path
+bestIndexPath graph =
+    let (start, end) = Graph.nodeRange graph
+    in SP.sp start end graph
+
+
+-- Take only the first RatedHand, except for the last HandGroup. For that one, take the tail.
+contentsToHands :: [Maybe Contents] -> [Hand]
+contentsToHands list
+    | null list = []
+    | all isJust list = contentsToHands' $ catMaybes list
+    | otherwise = error "Gap in output chord progression."
+
+contentsToHands' :: [Contents] -> [Hand]
+contentsToHands' (Start:rest) = contentsToHands' rest
+contentsToHands' ((HandGroup hands):End:[]) = map hand hands
+contentsToHands' ((HandGroup firstHands):rest) = hand (head firstHands) : contentsToHands' rest

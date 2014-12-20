@@ -9,9 +9,9 @@ import RateChord
 import RateChordTransition
 import GenerateChords
 import ExampleChordProgressions
-import Optimize
+import HandGraph
 
--- | Get the 'ChordRating' for a given 'Hand', if it satisfied all 'ChordConstraints'.
+-- | Get the 'ChordRating' for a given 'Hand', if it satisfied all 'ChordConstraint's.
 evalulateHand :: Hand -> Maybe Rating
 evalulateHand hand
     | checkAllConstraints hand = Just $ totalRating hand
@@ -19,10 +19,7 @@ evalulateHand hand
 
 -- | Bird's-eye view: Get the optimal 'Hand' progression for a 'ChordSymbol' progression.
 optimalHandProgression :: [ChordSymbol] -> [Hand]
-optimalHandProgression chordSymbols = case optimalPathToState $ generateProgressions chordSymbols of
-    Nothing -> error "Chord Progression not feasible."
-    Just path -> pathToHandProgression path
-
+optimalHandProgression = bestHandProgression
 
 main :: IO ()
 main = return ()
