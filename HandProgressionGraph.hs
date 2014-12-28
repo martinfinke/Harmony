@@ -10,7 +10,7 @@ import RateChordTransition (totalTransitionRating)
 import ExampleChordProgressions
 import GenerateChords
 import ConstrainChord (checkAllConstraints)
-import Utils (allCombinationsWith, allCombinationsVariableLength, combineNeighborsVariableLength, combineNeighbors2)
+import Utils (slidingWindow, combineNeighbors2)
 import qualified Data.Graph.Inductive.Graph as Graph
 import qualified Data.Graph.Inductive.Query.SP as SP
 --import Data.Graph.Inductive.Tree (Gr)
@@ -38,9 +38,7 @@ type Edge = Graph.LEdge Rating
 -- | The maximum number of 'Hand's examined by any 'ChordTransitionRater'.
 -- This is the length of the '[Hand]' list passed to each 'ChordTransitionRater' function. If a 'ChordTransitionRater' tries to pattern-match a higher number of 'Hand's than this value, it won't match.
 subProgressionLength :: Int
-subProgressionLength = 5
-
--- Problem 1: Wenn ein Song kürzer ist als subProgressionLength, dann werden momentan die ersten Akkorde des Songs von den ChordTransitionRatern verschont, die z.B. nur 2 Akkorde begutachten.
+subProgressionLength = 2
 
 getRatedHand :: ([RatedHand] -> RatedHand) -> [RatedHand] -> RatedHand
 getRatedHand selector hands
@@ -74,7 +72,7 @@ addIndices startingIndex (currentLevel:rest) =
     let currentLength = length currentLevel
         indices = take currentLength [startingIndex..]
         nodes = zip indices currentLevel
-    in nodes : addIndices (startingIndex+currentLength) rest 
+    in nodes : addIndices (startingIndex + currentLength) rest 
 addIndices _ [] = []
 
 makeEdges :: [[Node]] -> [Edge]
@@ -101,7 +99,7 @@ shouldMakeNeighborEdge (SubProgression lhsHands) (SubProgression rhsHands) =
     (hand . relevantLhsHand) lhsHands == (hand . relevantRhsHand) rhsHands
 
 makeTransitions :: [[RatedHand]] -> [[SubProgression]]
-makeTransitions ratedHands = combineNeighborsVariableLength subProgressionLength (allCombinationsVariableLength subProgressionLength SubProgression) ratedHands
+makeTransitions ratedHands = slidingWindow subProgressionLength SubProgression ratedHands
 
 edgeCost :: SubProgression -> SubProgression -> Rating
 edgeCost End _ = error "Transitioning out of End!"
@@ -132,11 +130,10 @@ bestIndexPath graph =
 -- Take only the first RatedHand, except for the last SubProgression. For that one, take the tail.
 subProgressionsToHands :: [Maybe SubProgression] -> [Hand]
 subProgressionsToHands list
-    | null list = []
     | all isJust list = subProgressionsToHands' $ catMaybes list
     | otherwise = error "Gap in output chord progression."
 
 subProgressionsToHands' :: [SubProgression] -> [Hand]
 subProgressionsToHands' (Start:rest) = subProgressionsToHands' rest
-subProgressionsToHands' ((SubProgression hands):End:[]) = map hand hands
-subProgressionsToHands' ((SubProgression firstHands):rest) = hand (head firstHands) : subProgressionsToHands' rest
+subProgressionsToHands' (End:[]) = []
+subProgressionsToHands' ((SubProgression firstHands):others) = hand (last firstHands) : subProgressionsToHands' others

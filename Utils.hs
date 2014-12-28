@@ -33,19 +33,34 @@ allCombinationsWith :: (a -> b -> c) -> [a] -> [b] -> [c]
 allCombinationsWith f (x:xs) ys = map (f x) ys ++ allCombinationsWith f xs ys
 allCombinationsWith _ [] _ = []
 
-allCombinationsVariableLength :: Int -> ([a] -> b) -> [[a]] -> [b]
-allCombinationsVariableLength len f matrix =
-    map f $ stepwiseCombine matrix
-    where stepwiseCombine matrix
-            | null matrix = []
-            | length matrix <= len = allPathsThroughColumns matrix
-            | otherwise = allPathsThroughColumns (take len matrix) ++ stepwiseCombine (tail matrix)
-          allPathsThroughColumns matrix = case matrix of
+allPathsThroughColumns :: [[a]] -> [[a]]
+allPathsThroughColumns matrix = case matrix of
             --(lastCol:[]) -> map (:[]) lastCol
             [] -> [[]]
             (firstCol:otherCols) ->
                 let rest = allPathsThroughColumns otherCols
                 in allCombinationsWith (:) firstCol rest
+
+-- | Slides a window with a given maximum width over a list of columns. For each width, build all possible transitions from the left to the right end of the window and apply a given function to this transition.
+slidingWindow :: Int -- ^ The maximum window width
+             -> ([a] -> b) -- ^ The function to be applied to each transition
+             -> [[a]] -- ^ The input columns
+             -> [[b]] -- ^ A list of lists, where each sublist contains the results of applying the function to all transitions for the particular window width.
+slidingWindow maxWindowWidth f columns = map (map f) $ windowViews maxWindowWidth 1 columns
+ 
+windowViews :: Int -> Int -> [[a]] -> [[[a]]]
+windowViews _ _ [] = []
+windowViews maxWindowWidth currentWidth cols =
+        let currentScope = take currentWidth cols
+            combinations = allPathsThroughColumns currentScope
+            shouldGrowWindow = currentWidth < maxWindowWidth && currentWidth < length cols
+            isAtEnd = currentWidth == length cols
+            rest
+                | shouldGrowWindow = windowViews maxWindowWidth (succ currentWidth) cols
+                | isAtEnd = []
+                | otherwise = windowViews maxWindowWidth currentWidth (tail cols)
+        in combinations : rest
+
 
 -- | Combines all neighbors of a list into pairs.
 -- The first value in the list only appears once ('fst' in the first tuple), the last value appears only once ('snd' in the last tuple). All other values appear twice, once as 'fst', and once as 'snd'.
@@ -60,18 +75,3 @@ combineNeighbors2 :: (a -> a -> b) -> [a] -> [b]
 combineNeighbors2 f (x:x':xs) = f x x': combineNeighbors2 f (x':xs)
 combineNeighbors2 _ (_:[]) = []
 combineNeighbors2 _ [] = []
-
-combineNeighborsVariableLength :: Int -- ^ The maximum length of a neighbor group. If the input list is shorter than this value, the group length will be the length of the input list.
-                 -> ([a] -> b) -- ^ A function combining neighbors into a group
-                 -> [a] -- ^ The list to be grouped into neighbors
-                 -> [b]
-combineNeighborsVariableLength maxGroupLength f list
-    | maxGroupLength == 0 = error "Trying to group into groups of length 0."
-    | null list = []
-    | length list < maxGroupLength = [f list]
-    | otherwise = combineNeighbors' list
-    where combineNeighbors' ls
-            | length ls < maxGroupLength = []
-            | otherwise = let toGroup = take maxGroupLength ls
-                              remainder = tail ls
-                          in f toGroup : combineNeighbors' remainder
