@@ -33,7 +33,9 @@ instance Transposable Semitones Semitones where
     (Semitones st1) <-> (Semitones st2) =  Semitones (st1-st2)
 
 -- | MIDI Octave
-type Octave = Int
+newtype Octave = Octave Int
+    deriving (Eq, Ord, Show)
+
 -- | Used for relative offsets and intervals
 newtype Semitones = Semitones Int
     deriving (Eq, Ord)
@@ -178,14 +180,14 @@ instance Show ChordSymbol where
               showChordSlash = maybe "" (('_':) . show)
 
 -- | Create a 'Pitch' from a 'PitchClass' and an 'Octave'.
-toPitch :: PitchClass -> Octave -> Pitch
+toPitch :: PitchClass -> Int -> Pitch
 toPitch pitchClass octave = Pitch $ (semitonesPerOctave * octave) + fromEnum pitchClass
 
 -- | Inverse of 'toPitch'.
 fromPitch :: Pitch -> (PitchClass, Octave)
 fromPitch (Pitch pitch) =
     let (octave, pc) = pitch `divMod` semitonesPerOctave
-    in (toEnum pc, octave)
+    in (toEnum pc, Octave octave)
 
 -- | Retrieve the 'PitchClass' from a 'Pitch', discarding the 'Octave'.
 toPitchClass :: Pitch -> PitchClass
@@ -225,7 +227,7 @@ absInterval (Pitch pitch1) (Pitch pitch2) = Semitones $ abs (pitch1 - pitch2)
 -- | The interval between two pitch classes (always positive)
 pitchClassInterval :: PitchClass -> PitchClass -> Semitones
 pitchClassInterval pc1 pc2 = absInterval (pitch pc1) (pitch pc2)
-    where pitch = (flip toPitch 3)
+    where pitch = (flip toPitch 0)
 
 -- | The pitch range from the first to the second argument. Returns 'Nothing' iff the second pitch is below (or equal to) the first.
 pitchRangeBetween :: Pitch -> Pitch -> Maybe PitchRange
