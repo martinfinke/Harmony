@@ -14,11 +14,11 @@ type SubProgressionRater = [Hand] -- ^ The 'Hand' transition in reverse order, i
 
 -- | All 'SubProgressionRater's in this module.
 allSubProgressionRaters :: [SubProgressionRater]
-allSubProgressionRaters = [rate_avoidJumps 4,
-                            rate_avoidJumpInHighestVoice 5,
+allSubProgressionRaters = [rate_avoidJumps (Semitones 4),
+                            rate_avoidJumpInHighestVoice (Semitones 5),
                             rate_avoidTraversingBlackKeys,
                             rate_avoidHittingBetweenBlackKeys,
-                            rate_avoidSpanDifference 7,
+                            rate_avoidSpanDifference (Semitones 7),
                             rate_avoidClustering,
                             rate_avoidSpreading
                             ]
@@ -44,10 +44,11 @@ rate_avoidJumpInHighestVoice _ _ = perfectRating
 
 -- | Utility function to rate whether an interval is too large, given a tolerance.
 rateInterval :: Semitones -- ^ Tolerance value
-             -> Semitones -- ^ Starting note
-             -> Semitones -- ^ Target note
+             -> Pitch -- ^ Starting note
+             -> Pitch -- ^ Target note
              -> Rating
-rateInterval tolerance st1 st2 = fromIntegral . (max 0) . (subtract tolerance) $ absInterval st1 st2
+rateInterval (Semitones tolerance) pitch1 pitch2 = fromIntegral . (max 0) . (subtract tolerance) $ interval
+    where (Semitones interval) = absInterval pitch1 pitch2
 
 -- | Penalize whenever a white key from the first chord has to traverse a black key to reach another white key. Only a problem when the hand is "into the keys".
 rate_avoidTraversingBlackKeys :: SubProgressionRater
@@ -73,9 +74,11 @@ rate_avoidHittingBetweenBlackKeys _ = perfectRating
 -- | Avoid too high differences in span from one chord to the next.
 -- The first parameter indicates how high the difference may be (in 'Semitones') without being penalized.
 rate_avoidSpanDifference :: Semitones -> SubProgressionRater
-rate_avoidSpanDifference tolerance (hand2:hand1:_) =
+rate_avoidSpanDifference (Semitones tolerance) (hand2:hand1:_) =
     (* penaltyPerSemitone) . fromIntegral . (max 0) . (subtract tolerance) $ spanDifference
-    where spanDifference = semitoneSpan hand1 - semitoneSpan hand2
+    where spanDifference = span1 - span2
+          (Semitones span1) = semitoneSpan hand1
+          (Semitones span2) = semitoneSpan hand2
           penaltyPerSemitone = 0.3
 rate_avoidSpanDifference _ _ = perfectRating
 
@@ -95,7 +98,7 @@ rate_avoidClustering = rate . toChord . head
           rateSingle interval = if interval > minSpreadSemitones
                                     then perfectRating
                                     else standardPenalty
-          minSpreadSemitones = 4
+          minSpreadSemitones = Semitones 4
 
 -- | Chords that contain intervals higher than a quint (7 semitones) tend to sound "torn apart".
 rate_avoidSpreading :: SubProgressionRater
@@ -106,7 +109,7 @@ rate_avoidSpreading = rate . toChord . head
           rateSingle interval = if interval > maxSpreadSemitones
                                     then standardPenalty
                                     else perfectRating
-          maxSpreadSemitones = 7
+          maxSpreadSemitones = Semitones 7
 
 -- | Penalize whenever the lowest finger may accidentally hit a black key (above the white key it is playing), or when the highest finger may accidentally hit a black key (below the white key it is playing).
 -- This only applies when the hand is "into the keys", and is never a problem for small chord spans.

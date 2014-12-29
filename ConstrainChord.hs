@@ -33,8 +33,8 @@ constrain_fingerSpreading hand =
 
 -- | Ensures that all played notes are inside a given 'PitchRange'.
 constrain_insidePitchRange :: PitchRange -> ChordConstraint
-constrain_insidePitchRange (lowest, highest) =
-    all (inRange (lowest, highest)) . map snd . Map.toList
+constrain_insidePitchRange (Pitch lowest, Pitch highest) =
+    all (inRange (lowest, highest)) . map fromEnum . map snd . Map.toList
 
 -- | All generated 'Chord's should be inside this range.
 defaultAcceptedPitchRange :: PitchRange

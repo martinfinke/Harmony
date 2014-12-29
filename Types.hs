@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-|
 Module      : Types
 Description : Fundamental data types used throughout the project.
@@ -10,11 +11,33 @@ import Data.Ord (comparing)
 import Data.Tuple (swap)
 
 -- | MIDI Note Number
-type Pitch = Int
+newtype Pitch = Pitch Int
+    deriving (Eq, Show, Ord)
+
+instance Enum Pitch where
+    toEnum = Pitch
+    fromEnum (Pitch p) = p
+
+class Transposable a b where
+   (<+>) :: a -> b -> a
+   (<->) :: a -> b -> a
+
+infixl 6 <+>, <->
+
+instance Transposable Pitch Semitones where
+    (Pitch p) <+> (Semitones sts) = Pitch (p + sts)
+    (Pitch p) <-> (Semitones sts) = Pitch (p - sts)
+
+instance Transposable Semitones Semitones where
+    (Semitones st1) <+> (Semitones st2) =  Semitones (st1+st2)
+    (Semitones st1) <-> (Semitones st2) =  Semitones (st1-st2)
+
 -- | MIDI Octave
 type Octave = Int
 -- | Used for relative offsets and intervals
-type Semitones = Int
+newtype Semitones = Semitones Int
+    deriving (Eq, Ord)
+
 -- | A range of 'Pitch'es between a lower and an upper bound
 type PitchRange = (Pitch, Pitch)
 -- | A chord as a set of 'Pitch'es, without 'Finger' mapping.
@@ -61,7 +84,7 @@ pitchClasses = [minBound..maxBound]
 numberOfPitchClasses :: Int
 numberOfPitchClasses = length pitchClasses
 
-semitonesPerOctave :: Semitones
+semitonesPerOctave :: Int
 semitonesPerOctave = numberOfPitchClasses
 
 -- | Major/minor of a chord. This determines which kind of third will be generated.
@@ -101,7 +124,7 @@ showTensions tensions = (' ':) . intercalate " " . map show . sort $ tensions
 
 -- | Converts a 'Tension' to a relative semitone offset that can be added to the root note.
 tensionToSemitones :: Tension -> Semitones
-tensionToSemitones tension = snd . (`divMod` semitonesPerOctave) $ case tension of
+tensionToSemitones tension = Semitones . snd . (`divMod` semitonesPerOctave) $ case tension of
     DiminishedFifth -> 6
     AugmentedFifth -> 8
     DiminishedSixth -> 8
@@ -119,7 +142,7 @@ tensionToSemitones tension = snd . (`divMod` semitonesPerOctave) $ case tension 
 
 -- | Converts from a relative semitone offset to a 'Tension', if there's a corresponding one.
 semitonesToTension :: Semitones -> Maybe Tension
-semitonesToTension semitones = case snd $ semitones `divMod` semitonesPerOctave of
+semitonesToTension (Semitones sts) = case snd $ sts `divMod` semitonesPerOctave of
     1 -> Just DiminishedNinth
     2 -> Just Ninth
     3 -> Just AugmentedNinth
@@ -130,6 +153,14 @@ semitonesToTension semitones = case snd $ semitones `divMod` semitonesPerOctave 
     10 -> Just Seventh
     11 -> Just MajorSeventh
     _ -> Nothing
+
+-- | A part of the chord progression.
+-- 'Start' is a marker for the beginning of the progression, 'End' for the end.
+-- The 'SubProgression' value constructor wraps a progression of 'Hand's that will be rated together.
+data SubProgression = Start
+              | SubProgression [RatedHand]
+              | End
+    deriving(Show)
 
 -- | A chord symbol as found in jazz / popular music.
 -- Consists of a root 'PitchClass', an optional gender, and zero or more 'Tension's.
@@ -148,17 +179,17 @@ instance Show ChordSymbol where
 
 -- | Create a 'Pitch' from a 'PitchClass' and an 'Octave'.
 toPitch :: PitchClass -> Octave -> Pitch
-toPitch pitchClass octave = (semitonesPerOctave * octave) + fromEnum pitchClass
+toPitch pitchClass octave = Pitch $ (semitonesPerOctave * octave) + fromEnum pitchClass
 
 -- | Inverse of 'toPitch'.
 fromPitch :: Pitch -> (PitchClass, Octave)
-fromPitch pitch =
+fromPitch (Pitch pitch) =
     let (octave, pc) = pitch `divMod` semitonesPerOctave
     in (toEnum pc, octave)
 
 -- | Retrieve the 'PitchClass' from a 'Pitch', discarding the 'Octave'.
 toPitchClass :: Pitch -> PitchClass
-toPitchClass = toEnum . snd . (`divMod` semitonesPerOctave)
+toPitchClass (Pitch pitch) = toEnum . snd . (`divMod` semitonesPerOctave) $ pitch
 
 -- | This should be used to create 'Chord's (instead of the value constructor).
 chord :: [Pitch] -> Chord
@@ -189,7 +220,7 @@ semitoneSpan hand = absInterval (lowestNote hand) (highestNote hand)
 
 -- | The interval between two pitches (always positive)
 absInterval :: Pitch -> Pitch -> Semitones
-absInterval pitch1 pitch2 = abs (pitch1 - pitch2)
+absInterval (Pitch pitch1) (Pitch pitch2) = Semitones $ abs (pitch1 - pitch2)
 
 -- | The interval between two pitch classes (always positive)
 pitchClassInterval :: PitchClass -> PitchClass -> Semitones
@@ -202,13 +233,13 @@ pitchRangeBetween p1 p2
     | p2 > p1 = Just (p1, p2)
     | otherwise = Nothing
 
--- | Whether two 'Pitch'es are next to each other (i.e. 1 'Semitone' interval)
+-- | Whether two 'Pitch'es are next to each other (i.e. one is the 'succ'essor of the other)
 areNeighbouring :: Pitch -> Pitch -> Bool
-areNeighbouring p1 p2 = absInterval p1 p2 == 1
+areNeighbouring p1 p2 = succ p1 == p2 || succ p2 == p1
 
 -- | The two pitches directly next to a pitch.
 neighbours :: Pitch -> [Pitch]
-neighbours p = [p-1, p+1]
+neighbours p = [pred p, succ p]
 
 -- | Displays all finger-pitch mappings of a 'Hand' in a easy-to-read way.
 showHand :: Hand -> String

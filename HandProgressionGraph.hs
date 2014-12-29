@@ -10,19 +10,11 @@ import ExampleChordProgressions
 import GenerateChords
 import ConstrainChord (checkAllConstraints)
 import Utils (slidingWindow, combineNeighbors2)
-import qualified Data.Graph.Inductive.Graph as Graph
+import Data.Maybe (catMaybes, isJust)
 import qualified Data.Graph.Inductive.Query.SP as SP
+import qualified Data.Graph.Inductive.Graph as Graph
 --import Data.Graph.Inductive.Tree (Gr)
 import Data.Graph.Inductive.PatriciaTree (Gr(..))
-import Data.Maybe (catMaybes, isJust)
-
--- | A part of the chord progression.
--- 'Start' is a marker for the beginning of the progression, 'End' for the end.
--- The 'SubProgression' value constructor wraps a progression of 'Hand's that will be rated together.
-data SubProgression = Start
-              | SubProgression [RatedHand]
-              | End
-    deriving(Show)
 
 type HandProgressionGraph = Gr SubProgression Rating
 type Node = Graph.LNode SubProgression

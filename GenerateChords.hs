@@ -12,16 +12,16 @@ import Data.Ord (comparing)
 
 -- | Creates the basic relative semitone offsets for a triad (root, third, fifth).
 basicSemitones :: ChordSymbol -> [Semitones]
-basicSemitones (ChordSymbol pitchClass maybeMajMin tensions maybeSlash) =case maybeMajMin of
+basicSemitones (ChordSymbol pitchClass maybeMajMin tensions maybeSlash) = case maybeMajMin of
     Just Major -> [root, majorThird, fifth] ++ slashSemitones
     Just Minor -> [root, minorThird, fifth] ++ slashSemitones
     -- Doesn't create a third if the 'ChordSymbol' is neither major nor minor:
     Nothing -> [root, fifth] ++ slashSemitones
-    where root = 0
-          minorThird = 3
-          majorThird = 4
+    where root = Semitones 0
+          minorThird = Semitones 3
+          majorThird = Semitones 4
           -- Create a diminished fifth (instead of the perfect fifth), if specified:
-          fifth = if DiminishedFifth `elem` tensions then 6 else 7
+          fifth = Semitones $ if DiminishedFifth `elem` tensions then 6 else 7
           -- Generate a semitone offset for the slash note:
           slashSemitones = case maybeSlash of
               Nothing -> []
@@ -43,7 +43,7 @@ chordsForChordSymbol chordSymbol@(ChordSymbol pitchClass _ tensions slash) = cas
           semitoneCombinations = combinations relativeSemitones
           -- Convert the relative offsets to absolute pitches:
           absolutePitches = map toAbsolutePitch semitoneCombinations
-          toAbsolutePitch = chord . map (+ toPitch pitchClass octave)
+          toAbsolutePitch = chord . map ((<+>) (toPitch pitchClass octave)) :: [Semitones] -> Chord
           -- The base octave from which the offsets will be transposed:
           octave = 3 -- TODO: Should be a parameter
 
@@ -62,11 +62,11 @@ lowestNoteIs slashPitchClass (Chord c) = case c of
 combinations :: [Semitones] -> [[Semitones]]
 combinations [] = [[]]
 combinations (st:sts) = concat $ map appendRest transposedSts
-    where transposedSts = map (+st) allowedOctaveTranspositions
+    where transposedSts = map (<+>st) allowedOctaveTranspositions
           appendRest semitones = map (semitones:) (combinations sts)
 
 -- | Determines how much a note in a chord may be transposed up or down.
 -- This list should only contain octaves (i.e. multiples of 12).
 allowedOctaveTranspositions :: [Semitones]
-allowedOctaveTranspositions = map (*semitonesPerOctave) [-1, 0, 1]
+allowedOctaveTranspositions = map (Semitones . (*) semitonesPerOctave) [-1, 0, 1]
 
