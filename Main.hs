@@ -5,8 +5,7 @@ import qualified Data.Map as Map
 import Types
 import ConstrainChord
 import Piano
-import RateChord
-import RateChordTransition
+import RateSubProgression
 import GenerateChords
 import ExampleChordProgressions
 import HandProgressionGraph
@@ -15,7 +14,7 @@ import Utils
 -- | Get the 'ChordRating' for a given 'Hand', if it satisfied all 'ChordConstraint's.
 evalulateHand :: Hand -> Maybe Rating
 evalulateHand hand
-    | checkAllConstraints hand = Just $ totalRating hand
+    | checkAllConstraints hand = Just . totalRating . return $ hand
     | otherwise = Nothing
 
 -- | Bird's-eye view: Get the optimal 'Hand' progression for a 'ChordSymbol' progression.

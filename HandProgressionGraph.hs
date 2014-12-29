@@ -5,8 +5,7 @@ Description : Generates a graph of all possible 'Hand's for a given 'ChordSymbol
 module HandProgressionGraph where
 
 import Types
-import RateChord (Rating, totalRating, perfectRating)
-import RateChordTransition (totalTransitionRating)
+import RateSubProgression (totalRating)
 import ExampleChordProgressions
 import GenerateChords
 import ConstrainChord (checkAllConstraints)
@@ -17,15 +16,9 @@ import qualified Data.Graph.Inductive.Query.SP as SP
 import Data.Graph.Inductive.PatriciaTree (Gr(..))
 import Data.Maybe (catMaybes, isJust)
 
-
--- | A 'Hand' together with its 'totalRating'.
--- The 'Rating' is included because values of this type are duplicated a lot in different 'SubProgression's, and it would be redundant to calculate the 'Rating' again each time.
-data RatedHand = RatedHand {hand :: Hand, rating :: Rating}
-    deriving(Show)
-
 -- | A part of the chord progression.
 -- 'Start' is a marker for the beginning of the progression, 'End' for the end.
--- The 'SubProgression' value constructor 
+-- The 'SubProgression' value constructor wraps a progression of 'Hand's that will be rated together.
 data SubProgression = Start
               | SubProgression [RatedHand]
               | End
@@ -35,8 +28,9 @@ type HandProgressionGraph = Gr SubProgression Rating
 type Node = Graph.LNode SubProgression
 type Edge = Graph.LEdge Rating
 
--- | The maximum number of 'Hand's examined by any 'ChordTransitionRater'.
--- This is the length of the '[Hand]' list passed to each 'ChordTransitionRater' function. If a 'ChordTransitionRater' tries to pattern-match a higher number of 'Hand's than this value, it won't match.
+-- | The maximum number of 'Hand's examined by any 'SubProgressionRater'.
+-- This is the maximum length of the '[Hand]' list passed to each 'SubProgressionRater' function.
+-- At the beginning of the song, the list is shorter. The list lengths are [1..subProgressionLength].
 subProgressionLength :: Int
 subProgressionLength = 2
 
@@ -64,7 +58,7 @@ makeGraph chordSymbols =
 ratedHandsForChordSymbol :: ChordSymbol -> [RatedHand]
 ratedHandsForChordSymbol chordSymbol =
     let hands = filter checkAllConstraints $ handsForChordSymbol chordSymbol
-        ratings = map totalRating hands
+        ratings = map (totalRating . return) hands
     in zipWith RatedHand hands ratings
 
 addIndices :: Int -> [[a]] -> [[Graph.LNode a]]
@@ -88,7 +82,6 @@ makeNeighborEdges (firstLeft:restLeft) rhsCol =
           combineOne lhsElem rhsCol = catMaybes $ map (makeEdge lhsElem) rhsCol
 makeNeighborEdges [] _ = []
 
-
 -- | Determines whether an edge should be created to link two 'SubProgression' nodes.
 -- From the 'Start' and to the 'End' there should be edges to all neighboring nodes.
 -- For neighboring 'SubProgression' nodes, it depends on whether both sides' relevant hands are equal. See 'relevantLhsHand' and 'relevantRhsHand'.
@@ -104,13 +97,9 @@ makeTransitions ratedHands = slidingWindow subProgressionLength SubProgression r
 edgeCost :: SubProgression -> SubProgression -> Rating
 edgeCost End _ = error "Transitioning out of End!"
 edgeCost _ Start = error "Transitioning into Start!"
-edgeCost Start (SubProgression (hand:_)) = rating hand
 edgeCost _ End = perfectRating
-edgeCost (SubProgression _) (SubProgression hands) =
-    let reversedOrder@(lastHand:_) = reverse hands
-        handRating = rating lastHand
-        transitionRating = totalTransitionRating $ map hand reversedOrder
-    in handRating + transitionRating
+edgeCost _ (SubProgression hands) =
+    totalRating $ map hand $ reverse hands
 
 bestHandProgression :: [ChordSymbol] -> [Hand]
 bestHandProgression = bestHandProgressionForGraph . makeGraph
@@ -125,7 +114,6 @@ bestIndexPath :: HandProgressionGraph -> Graph.Path
 bestIndexPath graph =
     let (start, end) = Graph.nodeRange graph
     in SP.sp start end graph
-
 
 -- Take only the first RatedHand, except for the last SubProgression. For that one, take the tail.
 subProgressionsToHands :: [Maybe SubProgression] -> [Hand]

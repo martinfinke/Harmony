@@ -160,22 +160,22 @@ godBlessTheChild =
 
 -- Other examples to test different functionality:
 
--- | These should be penalized by the 'RateChord.rate_avoidClustering' 'RateChordTransition.ChordRater'.
+-- | These should be penalized by the 'rate_avoidClustering' 'SubProgressionRater'.
 clusteredHand1, clusteredHand2 :: Hand
 clusteredHand1 = toHand $ chord [toPitch C 3, toPitch D 3, toPitch Dsharp 3, toPitch A 3]
 clusteredHand2 = toHand $ chord [toPitch C 3, toPitch D 3, toPitch Dsharp 3, toPitch F 3]
 
--- | These should be penalized by the 'RateChord.rate_avoidSpreading' 'RateChordTransition.ChordRater'.
+-- | These should be penalized by the 'rate_avoidSpreading' 'SubProgressionRater'.
 spreadHand1, spreadHand2 :: Hand
 spreadHand1 = toHand $ chord [toPitch G 3, toPitch G 4, toPitch C 5]
 spreadHand2 = toHand $ chord [toPitch G 3, toPitch G 4, toPitch G 5]
 
--- | These should be penalized by the 'RateChord.rate_avoidAccidentalBlackKeyHit' 'RateChordTransition.ChordRater'.
+-- | These should be penalized by the 'rate_avoidAccidentalBlackKeyHit' 'SubProgressionRater'.
 accidentalBlackKeyHitHand1, accidentalBlackKeyHitHand2 :: Hand
 accidentalBlackKeyHitHand1 = toHand $ chord [toPitch Csharp 3, toPitch G 3, toPitch D 4]
 accidentalBlackKeyHitHand2 = toHand $ chord [toPitch C 3, toPitch G 3, toPitch A 3, toPitch B 3, toPitch Csharp 4]
 
--- | This transition should be penalized by the 'RateChordTransition.rate_avoidJumps' 'RateChordTransition.ChordTransitionRater'.
+-- | This transition should be penalized by the 'rate_avoidJumps' 'SubProgressionRater'.
 -- Usage:
 -- >>> rate_avoidJumps 5 (fst jumpingTransition) (snd jumpingTransition)
 -- 16.0

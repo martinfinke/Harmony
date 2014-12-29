@@ -27,6 +27,20 @@ type Finger = Int
 -- | A chord with corresponding finger mapping.
 type Hand = Map.Map Finger Pitch
 
+-- | A 'Rating' is always >= 0, and a low value is better.
+type Rating = Float
+
+perfectRating, standardPenalty :: Rating
+-- | The rating given to a flawless 'Hand'.
+perfectRating = 0.0
+-- | The penalty added to a 'Hand' whenever it violates a rule.
+standardPenalty = 1.0
+
+-- | A 'Hand' together with its 'totalRating'.
+-- The 'Rating' is included because values of this type are duplicated a lot in different 'SubProgression's, and it would be redundant to calculate the 'Rating' again each time.
+data RatedHand = RatedHand {hand :: Hand, rating :: Rating}
+    deriving(Show)
+
 -- | The 12 pitch classes in western tonality, without enharmonic equivalents.
 data PitchClass = C | Csharp | D | Dsharp | E | F | Fsharp | G | Gsharp | A | Asharp | B
     deriving (Show, Eq, Enum, Bounded, Ord)

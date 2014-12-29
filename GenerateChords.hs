@@ -9,8 +9,6 @@ module GenerateChords where
 import Types
 import Data.List (nub, sortBy)
 import Data.Ord (comparing)
-import RateChord
-import RateChordTransition
 
 -- | Creates the basic relative semitone offsets for a triad (root, third, fifth).
 basicSemitones :: ChordSymbol -> [Semitones]
