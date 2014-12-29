@@ -57,7 +57,7 @@ executable Harmony
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.7 && <4.8, containers >=0.5.5
+  build-depends:       base >=4.7 && <4.8, containers >=0.5.5, fgl >=5.5, array >=0.5
   
   -- Directories containing source files.
   -- hs-source-dirs:      
@@ -68,8 +68,8 @@ executable Harmony
 Test-Suite Tests
   type:                exitcode-stdio-1.0
   main-is:             Tests.hs
-  build-depends:       base, QuickCheck, containers >=0.5.5
+  build-depends:       base, QuickCheck, containers >=0.5.5, fgl >=5.5, array >=0.5
 
 library
-  exposed-modules:     Main, Types, ConstrainChord, ExampleChordProgressions, GenerateChords, Optimize, Piano, RateChord, RateChordTransition, Utils
-  build-depends:       base >=4.7 && <4.8, containers >=0.5.5
+  exposed-modules:     Main, Types, ConstrainChord, ExampleChordProgressions, GenerateChords, Piano, RateSubProgression, HandProgressionGraph, Utils
+  build-depends:       base >=4.7 && <4.8, containers >=0.5.5, fgl >=5.5, array >=0.5
