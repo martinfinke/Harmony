@@ -26,16 +26,6 @@ type Edge = Graph.LEdge Rating
 subProgressionLength :: Int
 subProgressionLength = 2
 
-getRatedHand :: ([RatedHand] -> RatedHand) -> [RatedHand] -> RatedHand
-getRatedHand selector hands
-    | null hands = error "Empty hands group."
-    | otherwise = selector hands
-
-relevantLhsHand, relevantRhsHand :: [RatedHand] -> RatedHand
-relevantLhsHand = getRatedHand last
-relevantRhsHand = getRatedHand (last . init)
-
-
 makeGraph :: [ChordSymbol] -> HandProgressionGraph
 makeGraph chordSymbols =
     let ratedHands = map ratedHandsForChordSymbol chordSymbols :: [[RatedHand]]
@@ -80,8 +70,11 @@ makeNeighborEdges [] _ = []
 shouldMakeNeighborEdge :: SubProgression -> SubProgression -> Bool
 shouldMakeNeighborEdge Start _ = True
 shouldMakeNeighborEdge _ End = True
-shouldMakeNeighborEdge (SubProgression lhsHands) (SubProgression rhsHands) =
-    (hand . relevantLhsHand) lhsHands == (hand . relevantRhsHand) rhsHands
+shouldMakeNeighborEdge (SubProgression lhsHands) (SubProgression rhsHands) = relevantLhs == relevantRhs
+    where u = length lhsHands
+          v = length rhsHands
+          relevantLhs = map hand $ drop (u-v+1) lhsHands
+          relevantRhs = map hand $ take (v-1) rhsHands
 
 makeSubProgressions :: [[RatedHand]] -> [[SubProgression]]
 makeSubProgressions ratedHands = slidingWindow subProgressionLength SubProgression ratedHands
