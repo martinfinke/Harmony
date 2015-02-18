@@ -158,7 +158,7 @@ semitonesToTension (Semitones sts) = case snd $ sts `divMod` semitonesPerOctave 
 
 -- | A part of the chord progression.
 -- 'Start' is a marker for the beginning of the progression, 'End' for the end.
--- The 'SubProgression' value constructor wraps a progression of 'Hand's that will be rated together.
+-- The 'SubProgression' value constructor wraps a progression of one or more 'Hand's that will be rated together.
 data SubProgression = Start
               | SubProgression [RatedHand]
               | End
@@ -245,5 +245,5 @@ neighbours p = [pred p, succ p]
 
 -- | Displays all finger-pitch mappings of a 'Hand' in a easy-to-read way.
 showHand :: Hand -> String
-showHand hand = intercalate "," $ map show $ sortBy (comparing swap) $ map (fromPitch . snd) (Map.toList hand)
+showHand = intercalate "," . map show . sortBy (comparing swap) . map (fromPitch . snd) . Map.toList
 

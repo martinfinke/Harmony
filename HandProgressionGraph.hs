@@ -39,7 +39,7 @@ relevantRhsHand = getRatedHand (last . init)
 makeGraph :: [ChordSymbol] -> HandProgressionGraph
 makeGraph chordSymbols =
     let ratedHands = map ratedHandsForChordSymbol chordSymbols :: [[RatedHand]]
-        transitions = makeTransitions ratedHands
+        transitions = makeSubProgressions ratedHands
         withStartAndEnd = [Start] : transitions ++ [[End]]
         withIndices = addIndices 0 withStartAndEnd
         edges = makeEdges withIndices
@@ -83,8 +83,8 @@ shouldMakeNeighborEdge _ End = True
 shouldMakeNeighborEdge (SubProgression lhsHands) (SubProgression rhsHands) =
     (hand . relevantLhsHand) lhsHands == (hand . relevantRhsHand) rhsHands
 
-makeTransitions :: [[RatedHand]] -> [[SubProgression]]
-makeTransitions ratedHands = slidingWindow subProgressionLength SubProgression ratedHands
+makeSubProgressions :: [[RatedHand]] -> [[SubProgression]]
+makeSubProgressions ratedHands = slidingWindow subProgressionLength SubProgression ratedHands
 
 edgeCost :: SubProgression -> SubProgression -> Rating
 edgeCost End _ = error "Transitioning out of End!"
