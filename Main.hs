@@ -22,4 +22,7 @@ optimalHandProgression :: [ChordSymbol] -> [Hand]
 optimalHandProgression = bestHandProgression
 
 main :: IO ()
-main = return ()
+main = do
+    let allOfMe_hands = optimalHandProgression allOfMe
+    putStrLn . show . map showHand $ allOfMe_hands
+    return ()
