@@ -10,6 +10,7 @@ import GenerateChords
 import ExampleChordProgressions
 import HandProgressionGraph
 import Utils
+import LilypondOutput
 
 -- | Get the 'ChordRating' for a given 'Hand', if it satisfied all 'ChordConstraint's.
 evalulateHand :: Hand -> Maybe Rating
