@@ -1,15 +1,17 @@
 module LilypondOutput where
 
-import Types as T
-import Music.Lilypond as L
+import qualified Types as T
+import qualified Music.Lilypond as L
 import Text.Pretty(pretty)
-import Data.Map as Map hiding (map)
-import System.Process
+import qualified Data.Map as Map
+import System.Process (readProcess)
+import HandProgressionGraph (optimalHandProgression)
+import ExampleChordProgressions (examplesByName)
 
 
 pitchToLilypond :: T.Pitch -> L.Pitch
-pitchToLilypond p = L.Pitch (pitchName, accidental, o)
-    where (pitchClass, Octave o) = T.fromPitch p
+pitchToLilypond p = L.Pitch (pitchName, accidental, o+2)
+    where (pitchClass, T.Octave o) = T.fromPitch p
           (pitchName, accidental) = pitchClassToLilypond pitchClass
 
 pitchClassToLilypond :: T.PitchClass -> (L.PitchName, L.Accidental)
@@ -44,3 +46,13 @@ handProgressionToPdf :: String -> [T.Hand] -> IO ()
 handProgressionToPdf fileName hands = do
     lilypondStdout <- readProcess "lilypond" ["-o", fileName, "-"] (handProgressionToLilypondString hands)
     putStrLn ("Output from Lilypond: " ++ lilypondStdout)
+
+allExamplesToPdf :: IO ()
+allExamplesToPdf = mapM_ exampleToPdf exampleNames
+    where exampleNames = map fst $ Map.toList examplesByName
+
+exampleToPdf :: String -> IO ()
+exampleToPdf name = handProgressionToPdf name (optimalHandProgression chordSymbols)
+    where chordSymbols = case Map.lookup name examplesByName of
+            Just cSyms -> cSyms
+            Nothing -> error "Invalid name."

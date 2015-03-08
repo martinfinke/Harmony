@@ -32,7 +32,8 @@ repeatPhrase times chordSymbols
 repeatTwice :: [ChordSymbol] -> [ChordSymbol]
 repeatTwice = repeatPhrase 2
 
-
+examplesByName :: Map.Map String [ChordSymbol]
+examplesByName = Map.fromList [("allOfMe", allOfMe), ("allTheThingsYouAre", allTheThingsYouAre), ("autumnLeaves", autumnLeaves), ("blueInGreen", blueInGreen), ("aChildIsBorn", aChildIsBorn), ("donnaLee", donnaLee), ("epistrophy", epistrophy), ("giantSteps", giantSteps), ("godBlessTheChild", godBlessTheChild)]
 
 -- Chord Progressions from The Real Book, 6th Edition:
 

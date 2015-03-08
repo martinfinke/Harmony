@@ -86,11 +86,11 @@ edgeCost _ End = perfectRating
 edgeCost _ (SubProgression hands) =
     totalRating $ map hand $ reverse hands
 
-bestHandProgression :: [ChordSymbol] -> [Hand]
-bestHandProgression = bestHandProgressionForGraph . makeGraph
+optimalHandProgression :: [ChordSymbol] -> [Hand]
+optimalHandProgression = optimalHandProgressionForGraph . makeGraph
 
-bestHandProgressionForGraph :: HandProgressionGraph -> [Hand]
-bestHandProgressionForGraph graph =
+optimalHandProgressionForGraph :: HandProgressionGraph -> [Hand]
+optimalHandProgressionForGraph graph =
     let indexPath = bestIndexPath graph
         subProgressionNodes = map (Graph.lab graph) indexPath :: [Maybe SubProgression]
     in subProgressionsToHands subProgressionNodes

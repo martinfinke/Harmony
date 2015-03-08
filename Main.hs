@@ -18,10 +18,6 @@ evalulateHand hand
     | checkAllConstraints hand = Just . totalRating . return $ hand
     | otherwise = Nothing
 
--- | Bird's-eye view: Get the optimal 'Hand' progression for a 'ChordSymbol' progression.
-optimalHandProgression :: [ChordSymbol] -> [Hand]
-optimalHandProgression = bestHandProgression
-
 main :: IO ()
 main = do
     let allOfMe_hands = optimalHandProgression allOfMe
