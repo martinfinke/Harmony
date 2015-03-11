@@ -55,4 +55,4 @@ exampleToPdf :: String -> IO ()
 exampleToPdf name = handProgressionToPdf name (optimalHandProgression chordSymbols)
     where chordSymbols = case Map.lookup name examplesByName of
             Just cSyms -> cSyms
-            Nothing -> error "Invalid name."
+            Nothing -> error "Invalid example name."
