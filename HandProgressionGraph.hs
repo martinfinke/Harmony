@@ -89,6 +89,9 @@ edgeCost _ (SubProgression hands) =
 optimalHandProgression :: [ChordSymbol] -> [Hand]
 optimalHandProgression = optimalHandProgressionForGraph . makeGraph
 
+minimumCost :: [ChordSymbol] -> Rating
+minimumCost = snd . bestIndexPath . makeGraph
+
 optimalHandProgressionForGraph :: HandProgressionGraph -> [Hand]
 optimalHandProgressionForGraph graph =
     let (indexPath, _) = bestIndexPath graph
