@@ -70,3 +70,7 @@ combinations (st:sts) = concat $ map appendRest transposedSts
 allowedOctaveTranspositions :: [Semitones]
 allowedOctaveTranspositions = map (Semitones . (*) semitonesPerOctave) [-1, 0, 1]
 
+-- | Adds slashes to all 'ChordSymbol's to ensure that the base pitch is always the lowest note.
+forbidInversions :: [ChordSymbol] -> [ChordSymbol]
+forbidInversions = map $ \chordSymbol -> chordSymbol{chordSlash = Just $ chordPitchClass chordSymbol}
+

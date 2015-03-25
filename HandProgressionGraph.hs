@@ -98,7 +98,6 @@ optimalHandProgressionForGraph graph =
 bestIndexPath :: HandProgressionGraph -> (Graph.Path, Rating)
 bestIndexPath graph =
     let (start, end) = Graph.nodeRange graph
-    --in (SP.sp start end graph, SP.spLength start end graph)
     in (SP.sp start end graph, SP.spLength start end graph)
 
 -- Take only the first RatedHand, except for the last SubProgression. For that one, take the tail.
