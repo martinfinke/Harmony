@@ -91,14 +91,15 @@ optimalHandProgression = optimalHandProgressionForGraph . makeGraph
 
 optimalHandProgressionForGraph :: HandProgressionGraph -> [Hand]
 optimalHandProgressionForGraph graph =
-    let indexPath = bestIndexPath graph
+    let (indexPath, _) = bestIndexPath graph
         subProgressionNodes = map (Graph.lab graph) indexPath :: [Maybe SubProgression]
     in subProgressionsToHands subProgressionNodes
 
-bestIndexPath :: HandProgressionGraph -> Graph.Path
+bestIndexPath :: HandProgressionGraph -> (Graph.Path, Rating)
 bestIndexPath graph =
     let (start, end) = Graph.nodeRange graph
-    in SP.sp start end graph
+    --in (SP.sp start end graph, SP.spLength start end graph)
+    in (SP.sp start end graph, SP.spLength start end graph)
 
 -- Take only the first RatedHand, except for the last SubProgression. For that one, take the tail.
 subProgressionsToHands :: [Maybe SubProgression] -> [Hand]
