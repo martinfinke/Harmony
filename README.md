@@ -1,6 +1,8 @@
 # Harmony
 An algorithm to generate optimal chord arrangements for chord symbols.
 
+For more details, please refer to the [paper](http://martin-finke.de/documents/Masterprojekt_Harmony_Finke.pdf) (German, with english abstract).
+
 ## Requirements
 - [Haskell](https://www.haskell.org/platform/)
 - [cabal](https://www.haskell.org/cabal/) `>= 1.18` (for sandbox support)
