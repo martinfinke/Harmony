@@ -1,7 +1,11 @@
 # Harmony
 An algorithm to generate optimal chord arrangements for chord symbols.
 
-For more details, please refer to the [paper](http://martin-finke.de/documents/Masterprojekt_Harmony_Finke.pdf) (German, with english abstract).
+For more details, please refer to the [paper](http://martin-finke.de/documents/Masterprojekt_Harmony_Finke.pdf) (German, with english abstract). To use the Harmony version described in the paper, check out the corresponding commit (after cloning):
+
+```bash
+git checkout 427ec7cb95e64f2ba40c58e5e1e2a36f556cdd36
+```
 
 ## Requirements
 - [Haskell](https://www.haskell.org/platform/)
@@ -16,7 +20,6 @@ git clone https://github.com/martinfinke/Harmony.git
 cd Harmony
 cabal sandbox init
 cabal install --only-dependencies
-
 ```
 
 ## Usage
@@ -46,6 +49,8 @@ cabal exec ghci Main
 > handProgressionToLilypondString $ optimalHandProgression giantSteps
 "{   <b'[] dis''[] fis''[] ais''[]> … \n}"
 ```
+
+For more specific information about included functionality, please refer to the Haddock documentation.
 
 ## Haddock Documentation
 Run `cabal haddock` and open `dist/doc/html/Harmony/index.html` in your favourite browser.
