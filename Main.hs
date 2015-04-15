@@ -11,6 +11,7 @@ import ExampleChordProgressions
 import HandProgressionGraph
 import Utils
 import LilypondOutput
+import LilypondInput
 import qualified Data.Map as Map (lookup)
 
 import System.Environment (getArgs)

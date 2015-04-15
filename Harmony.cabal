@@ -70,8 +70,8 @@ executable Harmony
 Test-Suite Tests
   type:                exitcode-stdio-1.0
   main-is:             Tests.hs
-  build-depends:       base >=4.7 && <4.8, QuickCheck, containers >=0.5.5, fgl >=5.5, array >=0.5, lilypond >= 1.8.1, prettify >= 1.0, process >= 1.2.0.0
+  build-depends:       base >=4.7 && <4.8, QuickCheck, containers >=0.5.5, fgl >=5.5, array >=0.5, lilypond >= 1.8.1, prettify >= 1.0, process >= 1.2.0.0, parsec
 
 library
   exposed-modules:     Main, Types, ConstrainChord, ExampleChordProgressions, GenerateChords, Piano, RateSubProgression, HandProgressionGraph, Utils
-  build-depends:       base >=4.7 && <4.8, containers >=0.5.5, fgl >=5.5, array >=0.5, lilypond >= 1.8.1, prettify >= 1.0, process >= 1.2.0.0
+  build-depends:       base >=4.7 && <4.8, containers >=0.5.5, fgl >=5.5, array >=0.5, lilypond >= 1.8.1, prettify >= 1.0, process >= 1.2.0.0, parsec
