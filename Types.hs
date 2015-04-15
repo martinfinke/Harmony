@@ -71,14 +71,16 @@ data PitchClass = C | Csharp | D | Dsharp | E | F | Fsharp | G | Gsharp | A | As
     deriving (Show, Eq, Enum, Bounded, Ord)
 
 -- | Enharmonics (as aliases for their sharp equivalents)
-cFlat, dFlat, eFlat, fFlat, gFlat, aFlat, bFlat :: PitchClass
+cFlat, dFlat, eFlat, eSharp, fFlat, gFlat, aFlat, bFlat, bSharp :: PitchClass
 cFlat = B
 dFlat = Csharp
 eFlat = Dsharp
+eSharp = F
 fFlat = E
 gFlat = Fsharp
 aFlat = Gsharp
 bFlat = Asharp
+bSharp = C
 
 pitchClasses :: [PitchClass]
 pitchClasses = [minBound..maxBound]
