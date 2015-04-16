@@ -6,7 +6,7 @@ import Data.List (sortBy, nub)
 import Data.Ord (comparing)
 import qualified Data.Map as Map
 
-lilypondChordmode :: P.GenParser Char st [String]
+lilypondChordmode :: P.GenParser Char st [T.ChordSymbol]
 lilypondChordmode = do
     chordmodeOpen
     chordSymbols <- P.sepBy chordSymbol P.space
@@ -22,12 +22,24 @@ chordmodeClose = do
     P.spaces
     P.char '}'
 
-chordSymbol :: P.GenParser Char st String
+chordSymbol :: P.GenParser Char st T.ChordSymbol
 chordSymbol = do
     chordKey <- key
-    duration <- P.many P.alphaNum
+    duration
     mods <- modifiers
-    return $ (show chordKey) ++ (show mods)
+    let basic = T.ChordSymbol chordKey (Just T.Major) [] Nothing
+    return $ applyMods basic mods
+
+applyMods :: T.ChordSymbol -> [Modifier] -> T.ChordSymbol
+applyMods cs [] = cs
+applyMods cs (m:ms) = applyMods modifiedCurrent ms
+    where modifiedCurrent = case m of
+            NoTriadMod -> cs{T.chordMajMin=Nothing}
+            MinorMod -> cs{T.chordMajMin=Just T.Minor}
+            Tension t -> cs{T.chordTensions=(t : T.chordTensions cs)}
+
+duration :: P.GenParser Char st String
+duration = P.many P.alphaNum
 
 key :: P.GenParser Char st T.PitchClass
 key = do
@@ -68,17 +80,14 @@ modifiers = P.try $ do
     P.<|> return []
 
 modifier :: P.GenParser Char st [Modifier]
-modifier = tension P.<?> "modifier"
-
-tension :: P.GenParser Char st [Modifier]
-tension = foldr f (g $ head tensions) (tail tensions)
+modifier = foldr f (g $ head modifierMapping) (tail modifierMapping) P.<?> "modifier"
     where f t accum = P.try (g t) P.<|> accum
           g (str, mods) = do
                 P.string str
                 return mods
 
 -- This is based on http://lilypond.org/doc/v2.12/Documentation/user/lilypond/Common-chord-modifiers#Common-chord-modifiers
-tensions = sortBy (flip $ comparing $ length . fst) [
+modifierMapping = sortBy (flip $ comparing $ length . fst) [
     ("", []),
     ("5", []),
     ("m", [MinorMod]),
@@ -109,10 +118,9 @@ tensions = sortBy (flip $ comparing $ length . fst) [
 
 data Modifier = Tension T.Tension
                  | MinorMod
-                 | MinorSeventhMod
                  | NoTriadMod
     deriving (Show, Eq)
 
 
-parseLilypondChordmode :: String -> Either P.ParseError [String]
+parseLilypondChordmode :: String -> Either P.ParseError [T.ChordSymbol]
 parseLilypondChordmode input = P.parse lilypondChordmode "(unknown)" input
